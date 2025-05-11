@@ -1,15 +1,16 @@
+import os
+from dotenv import load_dotenv
+from pathlib import Path
 
-# MYSQL_USER = 'kanniwi'
-# MYSQL_PASSWORD = 'Mospolytech2025!'
-# MYSQL_HOST = 'kanniwi.mysql.pythonanywhere-services.com'
-# MYSQL_DATABASE = 'kanniwi$default'
 
-MYSQL_USER = 'root'
-MYSQL_PASSWORD = 'root'
-MYSQL_HOST = 'localhost'
-MYSQL_DATABASE = 'survey_db'
+load_dotenv()
 
-SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}"
-f"@{MYSQL_HOST}/{MYSQL_DATABASE}"
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
-SQLALCHEMY_TRACK_MODIFICATIONS = False
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+mysqlconnector://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}"
+        f"@{os.getenv('MYSQL_HOST')}/{os.getenv('MYSQL_DATABASE')}"
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
