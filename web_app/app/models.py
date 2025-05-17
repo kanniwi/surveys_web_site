@@ -1,12 +1,13 @@
 from app import db
 import enum
+from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 
 class UserRole(enum.Enum):
     admin = "admin"
     user = "user"
     guest = "guest"
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
