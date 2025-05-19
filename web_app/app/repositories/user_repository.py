@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app.models import db, User, Role
+from app.models import db, User, UserRole
 from sqlalchemy.orm import joinedload
 
 class UserRepository:
@@ -52,8 +52,12 @@ class UserRepository:
     def update_password(self, user_id, new_password):
         user = self.get_user_by_id(user_id)
         if user:
-            user.password = generate_password_hash(new_password)
+            user.password_hash = generate_password_hash(new_password)
             db.session.commit()
+            
+    def exists_by_username(self, username):
+        return db.session.query(User.id).filter_by(username=username).first() is not None
+
             
     
     
