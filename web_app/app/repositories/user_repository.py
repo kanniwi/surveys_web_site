@@ -1,7 +1,6 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app.models import db, User, UserRole
-from sqlalchemy.orm import joinedload
+from app.models import db, User
 
 class UserRepository:
     def get_user_by_id(self, user_id):
