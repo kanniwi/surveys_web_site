@@ -32,7 +32,7 @@ def login():
             return redirect(url_for('main.index'))
         
         flash('Неверное имя пользователя или пароль', 'danger')
-        return render_template('auth/login.html')
+    return render_template('auth/login.html')
         
 @bp.route('/logout')
 @login_required
@@ -57,15 +57,15 @@ def register():
                 flash('Пароли не совпадают', 'danger')
                 return render_template('auth/register.html')
             if not password_strength(password):
-                flash('Пароль должен быть не менее 8 символов, содержать заглавные, строчные буквы и цифры')
+                flash('Пароль должен быть не менее 8 символов, содержать заглавные, строчные буквы и цифры', 'warning')
                 return render_template('auth/register.html')
                 
             user_repository.create(username, email, password, 'user') 
             flash('Регистрация прошла успешно', 'success')
             return redirect(url_for('auth.login'))     
         
-    flash('Заполните все поля','danger')
-    render_template('auth/register.html')
+        flash('Заполните все поля','danger')
+    return render_template('auth/register.html')
     
 
         

@@ -1,1 +1,43 @@
 {% extends 'base.html' %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="w-100" style="max-width: 400px;">
+        <div class="text-center mb-4">
+            <!-- Заглушка под логотип -->
+            <div class="bg-secondary mb-2" style="width: 100%; height: 150px;"></div>
+            <p class="text-muted small">
+                non adipiscing non. elementum enim, porta est, tincidunt<br>
+                ex Quisque nisl. turpis Nullam amet, luctus ex. id odio
+            </p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="mb-3">
+                <label for="username" class="form-label">Имя пользователя</label>
+                <input type="text" name="username" class="form-control form-control-lg" id="username" required>
+            </div>
+
+            <div class="mb-1">
+                <label for="password" class="form-label">Пароль</label>
+                <input type="password" name="password" class="form-control form-control-lg" id="password" required>
+            </div>
+
+            <div class="mb-4 text-end">
+                <a href="#" class="link-secondary small">Забыли пароль?</a>
+            </div>
+
+            <div class="d-grid mb-4">
+                <button type="submit" class="btn btn-secondary btn-lg">Войти</button>
+            </div>
+        </form>
+
+        <div class="text-center text-muted small">
+            non adipiscing non. elementum enim, porta est, tincidunt<br>
+            ex Quisque nisl. turpis Nullam amet, luctus ex. id odio
+        </div>
+    </div>
+</div>
+{% endblock %}
