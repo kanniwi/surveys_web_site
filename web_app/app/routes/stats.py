@@ -1,5 +1,6 @@
 from flask import Blueprint
 from flask_login import login_required
+from flask import render_template
 
 bp = Blueprint('stats', __name__, url_prefix='/stats')
 
@@ -13,7 +14,7 @@ def overall_stats():
 @bp.route('/survey/<int:survey_id>')
 @login_required
 def survey_stats(survey_id):
-    pass
+    return render_template('stats/survey_stats.html', survey_id=survey_id)
 
 # Подробная статистика по конкретному вопросу внутри опроса
 @bp.route('/question/<int:question_id>')

@@ -29,7 +29,7 @@ def login():
         if user:
             flash('Авторизаия прошла успешно', 'success')
             login_user(user, remember=remember_me)
-            return redirect(url_for('main.index'))
+            return redirect(url_for('survey.catalog'))
         
         flash('Неверное имя пользователя или пароль', 'danger')
     return render_template('auth/login.html')
@@ -51,10 +51,10 @@ def register():
         
         if email and username and password and password_confirm:
             if user_repository.exists_by_username(username):
-                flash('Пользователь с таким именем уже существует', 'danger')
+                flash('Пользователь с таким именем уже существует', 'warning')
                 return render_template('auth/register.html')
             if password != password_confirm:
-                flash('Пароли не совпадают', 'danger')
+                flash('Пароли не совпадают', 'warning')
                 return render_template('auth/register.html')
             if not password_strength(password):
                 flash('Пароль должен быть не менее 8 символов, содержать заглавные, строчные буквы и цифры', 'warning')

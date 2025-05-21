@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.repositories import SurveyRepository
+from app.models import Survey
 
 bp = Blueprint('survey', __name__, url_prefix='/surveys')
 
@@ -13,8 +14,23 @@ def catalog():
 
 
 @bp.route('/create', methods=['GET', 'POST'])
+@login_required
 def create_survey():
-    return render_template('survey/create.html')
+    if request.method == 'POST':  
+        title = request.form.get('title')
+        description = request.form.get('description')
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+                 
+        survey_repository.create_survey(title, description, current_user.id, start_date, end_date, 'active')
+        flash('Опрос успешно создан', 'success')
+        return redirect(url_for('survey.my_surveys'))
+
+    if request.method == 'GET':
+        return render_template('survey/create.html')
+
+        
+    
 
 @bp.route('/my_surveys')
 @login_required
@@ -34,9 +50,13 @@ def edit_survey_questions(survey_id):
     pass
 
 # Удаление опроса
-@bp.route('/delete/<int:survey_id>', methods=['POST'])
+@bp.route('/<int:survey_id>/delete', methods=['POST'])
 def delete_survey(survey_id):
     pass
+
+@bp.route('/<int:survey_id>/take', methods=['POST'])
+def take_survey(survey_id):
+    return render_template('survey/take.html', survey_id=survey_id)
 
 # Просмотр одного опроса (как участник)
 @bp.route('/<int:survey_id>')

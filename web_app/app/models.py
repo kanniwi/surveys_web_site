@@ -1,6 +1,7 @@
 from app import db
 import enum
 from flask_login import UserMixin
+from datetime import datetime, timedelta
 
 class UserRole(enum.Enum):
     admin = "admin"
@@ -31,8 +32,8 @@ class Survey(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    start_date = db.Column(db.DateTime, nullable=False)
-    end_date = db.Column(db.DateTime, nullable=True)
+    start_date = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    end_date = db.Column(db.DateTime, default=datetime.now() + timedelta(days=365), nullable=True)
     status = db.Column(db.Enum(SurveyStatus), default=SurveyStatus.draft, nullable=False)
     
     author = db.relationship('User', back_populates='surveys', lazy=True)

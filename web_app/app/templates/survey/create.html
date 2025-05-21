@@ -1,1 +1,98 @@
 {% extends 'base.html' %}
+{% block title %}Создание опроса{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <h2 class="mb-4 text-center">Создание нового опроса</h2>
+
+            <form method="POST" action="{{ url_for('survey.create_survey') }}">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Название опроса</label>
+                    <input type="text" class="form-control form-control-lg" id="title" name="title" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="description" class="form-label">Описание</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                </div>
+
+                <!-- Здесь можно будет динамически добавлять вопросы с JS -->
+                <div id="questions-container">
+                    <h5 class="mb-3">Вопросы</h5>
+                    <!-- Пример одного вопроса -->
+                    <div class="card mb-3 question-block">
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <label class="form-label">Текст вопроса</label>
+                                <input type="text" name="questions[0][text]" class="form-control" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Тип вопроса</label>
+                                <select name="questions[0][type]" class="form-select">
+                                    <option value="text">Открытый</option>
+                                    <option value="single">Одиночный выбор</option>
+                                    <option value="multiple">Множественный выбор</option>
+                                </select>
+                            </div>
+                            <!-- Место для вариантов ответа -->
+                            <div class="answers-container mt-2"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-answer">Добавить вариант ответа</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="button" class="btn btn-outline-primary" id="add-question">Добавить вопрос</button>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg">Создать опрос</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- JS для динамического добавления вопросов и ответов -->
+<script>
+let questionIndex = 1;
+
+document.getElementById('add-question').addEventListener('click', function () {
+    const container = document.getElementById('questions-container');
+    const block = document.querySelector('.question-block').cloneNode(true);
+
+    // Очистка значений
+    block.querySelectorAll('input, select').forEach(input => input.value = '');
+    block.querySelector('.answers-container').innerHTML = '';
+    block.querySelector('.add-answer').addEventListener('click', addAnswer);
+
+    // Обновление индексов
+    block.querySelectorAll('[name]').forEach(input => {
+        const name = input.getAttribute('name');
+        const updated = name.replace(/\[\d+\]/, `[${questionIndex}]`);
+        input.setAttribute('name', updated);
+    });
+
+    container.appendChild(block);
+    questionIndex++;
+});
+
+function addAnswer(e) {
+    const container = e.target.previousElementSibling;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'answer[]';  // можно доработать для привязки к конкретному вопросу
+    input.className = 'form-control mt-1';
+    input.placeholder = 'Вариант ответа';
+    container.appendChild(input);
+}
+
+document.querySelectorAll('.add-answer').forEach(btn => {
+    btn.addEventListener('click', addAnswer);
+});
+</script>
+{% endblock %}
