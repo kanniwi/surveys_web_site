@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from repositories import survey_repository
+from app.repositories import survey_repository
 
 bp = Blueprint('survey', __name__, url_prefix='/surveys')
 
@@ -12,6 +12,12 @@ def catalog():
 @bp.route('/create', methods=['GET', 'POST'])
 def create_survey():
     return render_template('survey/create.html')
+
+@bp.route('/my_surveys')
+@login_required
+def my_surveys():
+    surveys = survey_repository.get_surveys_by_user_id(current_user.id)
+    return render_template('survey/my_surveys.html', surveys=surveys)
 
 # редактирование общего описания опроса (название, даты и т.п.)
 @bp.route('/<int:survey_id>/edit', methods=['GET', 'POST'])
