@@ -3,7 +3,10 @@ from app.models import db, Survey, SurveyStatus
 class SurveyRepository:
 
     def get_survey_by_id(self, survey_id): 
-        return db.session.query(Survey).filter_by(id=survey_id).first()    
+        return db.session.query(Survey).filter_by(id=survey_id).first()   
+    
+    def get_surveys_by_user_id(self, user_id):
+        return db.session.query(Survey).filter_by(user_id=user_id).all() 
 
     def get_all_surveys(self):
         return db.session.query(Survey).all()

@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app.repositories import survey_repository
+from app.repositories import SurveyRepository
 
 bp = Blueprint('survey', __name__, url_prefix='/surveys')
 
+survey_repository = SurveyRepository()
+
 @bp.route('/catalog')
 def catalog():
-    return render_template('survey/catalog.html')
+    surveys = survey_repository.get_all_surveys()
+    return render_template('survey/catalog.html', surveys=surveys)
 
 
 @bp.route('/create', methods=['GET', 'POST'])
