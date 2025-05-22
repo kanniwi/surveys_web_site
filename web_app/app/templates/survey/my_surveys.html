@@ -19,6 +19,9 @@
                     <strong>Количество ответов:</strong> {{ survey.response_count }}<br>
                     <strong>Описание:</strong> {{ survey.description or '—' }}
                 </p>
+                <div class="mt-auto d-flex justify-content-center">
+                    <a href="{{ url_for('stats.survey_stats', survey_id=survey.id) }}" class="btn btn-outline-secondary btn-sm">Статистика</a>
+                </div>
             </div>
         </div>
     </div>

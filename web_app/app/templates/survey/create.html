@@ -1,98 +1,193 @@
 {% extends 'base.html' %}
-{% block title %}Создание опроса{% endblock %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
+<div class="container my-5">
+    <h2 class="mb-4 text-center">Создание нового опроса</h2>
 
-            <h2 class="mb-4 text-center">Создание нового опроса</h2>
-
-            <form method="POST" action="{{ url_for('survey.create_survey') }}">
-                <div class="mb-3">
-                    <label for="title" class="form-label">Название опроса</label>
-                    <input type="text" class="form-control form-control-lg" id="title" name="title" required>
-                </div>
-
-                <div class="mb-4">
-                    <label for="description" class="form-label">Описание</label>
-                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                </div>
-
-                <!-- Здесь можно будет динамически добавлять вопросы с JS -->
-                <div id="questions-container">
-                    <h5 class="mb-3">Вопросы</h5>
-                    <!-- Пример одного вопроса -->
-                    <div class="card mb-3 question-block">
-                        <div class="card-body">
-                            <div class="mb-2">
-                                <label class="form-label">Текст вопроса</label>
-                                <input type="text" name="questions[0][text]" class="form-control" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Тип вопроса</label>
-                                <select name="questions[0][type]" class="form-select">
-                                    <option value="text">Открытый</option>
-                                    <option value="single">Одиночный выбор</option>
-                                    <option value="multiple">Множественный выбор</option>
-                                </select>
-                            </div>
-                            <!-- Место для вариантов ответа -->
-                            <div class="answers-container mt-2"></div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-answer">Добавить вариант ответа</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-grid mb-3">
-                    <button type="button" class="btn btn-outline-primary" id="add-question">Добавить вопрос</button>
-                </div>
-
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-success btn-lg">Создать опрос</button>
-                </div>
-            </form>
-
+    <form method="POST" action="{{ url_for('survey.create_survey') }}" class="survey-form">
+        <div class="mb-4">
+            <input type="text" name="title" class="form-control form-control-lg" placeholder="Название опроса" required>
         </div>
-    </div>
+
+        <div class="mb-4">
+            <textarea name="description" class="form-control" placeholder="Описание опроса (необязательно)" rows="2"></textarea>
+        </div>
+
+        <!-- Контейнер вопросов -->
+        <div id="questions-container" class="questions-wrapper"></div>
+
+        <!-- Кнопка добавления вопроса -->
+        <div class="d-grid gap-2 my-4">
+            <button type="button" class="btn btn-outline-primary btn-add" onclick="addQuestion()">
+                <i class="bi bi-plus-lg"></i> Добавить вопрос
+            </button>
+        </div>
+
+        <div class="text-center mt-5">
+            <button type="submit" class="btn btn-primary btn-lg px-7">Создать опрос</button>
+        </div>
+    </form>
 </div>
 
-<!-- JS для динамического добавления вопросов и ответов -->
-<script>
-let questionIndex = 1;
+<!-- Шаблон вопроса -->
+<template id="question-template">
+    <div class="card mb-4 question-block shadow-sm">
+        <div class="card-body p-4">
+            <div class="row">
+                <!-- Левая часть -->
+                <div class="col-md-8 pe-4">
+                    <div class="mb-3">
+                        <input type="text" name="questions[][text]" class="form-control question-input" placeholder="Текст вопроса" required>
+                    </div>
 
-document.getElementById('add-question').addEventListener('click', function () {
-    const container = document.getElementById('questions-container');
-    const block = document.querySelector('.question-block').cloneNode(true);
+                    <div class="answers-container mb-3"></div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-add-answer" onclick="addAnswer(this)">
+                        <i class="bi bi-plus"></i> Добавить вариант ответа
+                    </button>
+                </div>
 
-    // Очистка значений
-    block.querySelectorAll('input, select').forEach(input => input.value = '');
-    block.querySelector('.answers-container').innerHTML = '';
-    block.querySelector('.add-answer').addEventListener('click', addAnswer);
+                <!-- Правая часть -->
+                <div class="col-md-4 d-flex flex-column gap-3">
+                    <button type="button" class="btn btn-img-upload">
+                        <i class="bi bi-image"></i> 🖼 Прикрепить
+                    </button>
 
-    // Обновление индексов
-    block.querySelectorAll('[name]').forEach(input => {
-        const name = input.getAttribute('name');
-        const updated = name.replace(/\[\d+\]/, `[${questionIndex}]`);
-        input.setAttribute('name', updated);
-    });
+                    <select name="questions[][type]" class="form-select">
+                        <option value="single">Один вариант ответа</option>
+                        <option value="multiple">Несколько вариантов</option>
+                        <option value="text">Текстовый ответ</option>
+                    </select>
 
-    container.appendChild(block);
-    questionIndex++;
-});
+                    <div class="form-check form-switch d-flex justify-content-between align-items-center">
+                        <label class="form-check-label" for="required-switch">Обязательный вопрос</label>
+                        <input class="form-check-input" type="checkbox" name="questions[][required]" id="required-switch">
+                    </div>
 
-function addAnswer(e) {
-    const container = e.target.previousElementSibling;
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.name = 'answer[]';  // можно доработать для привязки к конкретному вопросу
-    input.className = 'form-control mt-1';
-    input.placeholder = 'Вариант ответа';
-    container.appendChild(input);
+                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeQuestion(this)">
+                        🗑 Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Шаблон варианта ответа -->
+<template id="answer-template">
+    <div class="input-group mb-2">
+        <input type="text" name="questions[][answers][]" class="form-control" placeholder="Ответ" required>
+        <button class="btn" type="button" onclick="this.parentElement.remove()">𐄂</button>
+    </div>
+</template>
+
+<style>
+.survey-form {
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-document.querySelectorAll('.add-answer').forEach(btn => {
-    btn.addEventListener('click', addAnswer);
-});
+.questions-wrapper {
+    border-radius: 8px;
+}
+
+.question-block {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s;
+}
+
+.question-block:hover {
+    border-color: #bdbdbd;
+}
+
+.question-input {
+    font-weight: 500;
+}
+
+.btn-add {
+    border-style: dashed;
+    padding: 12px;
+    font-weight: 500;
+}
+
+.btn-add-answer {
+    border-style: dashed;
+    border-width: 1px;
+}
+
+.btn-img-upload {
+    background-color: #f5f5f5;
+    border: 1px dashed #bdbdbd;
+    color: #616161;
+    width: 100%;
+    padding: 8px;
+}
+
+.btn-img-upload:hover {
+    background-color: #eeeeee;
+    color: #424242;
+}
+
+.btn-delete-question {
+    color: #e53935;
+    background: none;
+    border: none;
+    align-self: flex-end;
+    padding: 4px 8px;
+    margin-top: auto;
+}
+
+.btn-delete-question:hover {
+    color: #c62828;
+    background: rgba(229, 57, 53, 0.1);
+}
+
+.answer-item {
+    align-items: center;
+}
+
+.btn-remove-answer {
+    color: #e53935;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+}
+
+.form-check-input {
+    width: 2.5em;
+    height: 1.5em;
+}
+
+.form-switch .form-check-input {
+    margin-left: 0;
+}
+
+/* Иконки Bootstrap Icons */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css");
+</style>
+
+<script>
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+    const template = document.getElementById('question-template');
+    const questionNode = template.content.cloneNode(true);
+
+    // Добавляем один ответ по умолчанию
+    setTimeout(() => {
+        addAnswer(questionNode.querySelector('.btn-add-answer'));
+    }, 0);
+
+    container.appendChild(questionNode);
+}
+
+function addAnswer(button) {
+    const answerTemplate = document.getElementById('answer-template').content.cloneNode(true);
+    const answersContainer = button.closest('.card-body').querySelector('.answers-container');
+    answersContainer.appendChild(answerTemplate);
+}
+
+function removeQuestion(button) {
+    button.closest('.question-block').remove();
+}
 </script>
 {% endblock %}
