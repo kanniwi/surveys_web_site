@@ -4,3 +4,93 @@
     object-fit: contain;
     padding: 0 !important; 
 }
+
+.logo {
+    height: 40px; 
+    width: auto; 
+    object-fit: contain;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+
+.survey-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.questions-wrapper {
+    border-radius: 8px;
+}
+
+.question-block {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s;
+}
+
+.question-block:hover {
+    border-color: #bdbdbd;
+}
+
+.question-input {
+    font-weight: 500;
+}
+
+.btn-add {
+    border-style: dashed;
+    padding: 12px;
+    font-weight: 500;
+}
+
+.btn-add-answer {
+    border-style: dashed;
+    border-width: 1px;
+}
+
+.btn-img-upload {
+    background-color: #f5f5f5;
+    border: 1px dashed #bdbdbd;
+    color: #616161;
+    width: 100%;
+    padding: 8px;
+}
+
+.btn-img-upload:hover {
+    background-color: #eeeeee;
+    color: #424242;
+}
+
+.btn-delete-question {
+    color: #e53935;
+    background: none;
+    border: none;
+    align-self: flex-end;
+    padding: 4px 8px;
+    margin-top: auto;
+}
+
+.btn-delete-question:hover {
+    color: #c62828;
+    background: rgba(229, 57, 53, 0.1);
+}
+
+.answer-item {
+    align-items: center;
+}
+
+.btn-remove-answer {
+    color: #e53935;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+}
+
+.form-check-input {
+    width: 2.5em;
+    height: 1.5em;
+}
+
+.form-switch .form-check-input {
+    margin-left: 0;
+}

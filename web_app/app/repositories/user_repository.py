@@ -29,15 +29,24 @@ class UserRepository:
         db.session.commit()
         return new_user
         
-    def update(self, user_id, username=None, email=None, password=None, role=None):
+    def update(self, user_id, username=None, name=None, surname=None, birth_date=None, email=None, password=None, gender=None, role=None):
         user = self.get_user_by_id(user_id)
+        print(birth_date)
         if user:
             if username:
                 user.username = username
             if email:
                 user.email = email
+            if name:
+                user.name = name
+            if surname:
+                user.surname = surname
+            if birth_date:
+                user.birth_date = birth_date
             if password:
                 user.password_hash = generate_password_hash(password)
+            if gender:
+                user.gender=gender
             if role:
                 user.role = role
             db.session.commit()
