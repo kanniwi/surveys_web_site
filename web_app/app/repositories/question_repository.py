@@ -15,6 +15,7 @@ class QuestionRepository:
         )
         db.session.add(new_question)
         db.session.commit()
+        return new_question
     
     def update_question(self, question_id, **kwargs):
         question = self.get_question_by_id(question_id)

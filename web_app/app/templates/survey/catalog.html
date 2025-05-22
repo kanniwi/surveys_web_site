@@ -2,22 +2,24 @@
 {% block title %}Каталог опросов{% endblock %}
 
 {% block content %}
-<h1 class="text-center mb-4">Каталог опросов</h1>
-
+<div class="container my-2">
+    <h2 class="text-center mb-4">Каталог опросов</h2>
+</div>
 <div class="mb-4">
     <button class="btn btn-secondary">Сортировка</button>
 </div>
 
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-    {% for survey in surveys %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-4">
+    {% for entry in surveys %}
+    {% set survey = entry.survey %}
     <div class="col">
         <div class="card h-100 shadow-sm">
             <div class="card-body d-flex flex-column">
                 <h5 class="card-title">{{ survey.title }}</h5>
                 <p class="card-text">
                     <strong>Дата:</strong> {{ survey.start_date.strftime('%d.%m.%Y') }}<br>
-                    <strong>Количество вопросов:</strong> {{ survey.question_count }}<br>
-                    <strong>Количество ответов:</strong> {{ survey.response_count }}<br>
+                    <strong>Количество вопросов:</strong> {{ entry.question_count }}<br>
+                    <strong>Количество ответов:</strong> {{ entry.response_count }}<br>
                     <strong>Описание:</strong> {{ survey.description or '—' }}
                 </p>
                 <div class="mt-auto d-flex justify-content-between">
@@ -28,5 +30,6 @@
         </div>
     </div>
     {% endfor %}
+
 </div>
 {% endblock %}

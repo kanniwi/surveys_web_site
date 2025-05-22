@@ -38,7 +38,7 @@ class Survey(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     start_date = db.Column(db.DateTime, default=datetime.now(), nullable=False)
     end_date = db.Column(db.DateTime, default=datetime.now() + timedelta(days=365), nullable=True)
-    status = db.Column(db.Enum(SurveyStatus), default=SurveyStatus.draft, nullable=False)
+    status = db.Column(db.Enum(SurveyStatus), default=SurveyStatus.draft, nullable=False)    
     
     author = db.relationship('User', back_populates='surveys', lazy=True)
     questions = db.relationship('Question', back_populates='survey', lazy='joined')
