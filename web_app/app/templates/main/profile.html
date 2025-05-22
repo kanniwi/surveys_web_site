@@ -6,7 +6,7 @@
         <form method="POST" action="{{ url_for('main.update_profile') }}" id="profile-form">
             <div class="mb-3">
                 <label for="username" class="form-label">Логин</label>
-                <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" disabled>
+                <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" disabled readonly>
             </div>
 
             <div class="row">
@@ -59,7 +59,13 @@
         const inputs = form.querySelectorAll('input');
         const selects = form.querySelectorAll('select');
 
-        inputs.forEach(input => input.removeAttribute('disabled'));
+        inputs.forEach(input => {
+            if (input.name !== 'username' && input.type !== 'email') {
+                input.removeAttribute('disabled');
+            }
+        });
+
+
         selects.forEach(select => select.removeAttribute('disabled'));
 
         editBtn.classList.add('d-none');

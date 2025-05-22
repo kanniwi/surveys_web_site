@@ -28,14 +28,14 @@ def update_profile():
 
         user_repository.update(
             user_id=current_user.id,
-            username=request.form.get('username'),
             name=request.form.get('name'),
             surname=request.form.get('surname'),            
             birth_date=birth_date_res,
-            email=request.form.get('email'),
             gender=request.form.get('gender')
         )
         flash('Профиль успешно обновлён', 'success')
         return redirect(url_for('main.profile'))
+    flash('Ошибка обновления профиля', 'danger')
+    return redirect(url_for('main.profile'))
 
 
