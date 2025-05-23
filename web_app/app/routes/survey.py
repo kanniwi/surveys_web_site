@@ -103,16 +103,6 @@ def create_survey():
 
 
 
-@bp.route('/<int:survey_id>/edit', methods=['GET', 'POST'])
-def edit_survey(survey_id):
-    return render_template('survey/edit', survey_id=survey_id)
-
-
-@bp.route('/<int:survey_id>/edit-questions', methods=['GET'])
-def edit_survey_questions(survey_id):
-    pass
-
-
 @bp.route('/<int:survey_id>/delete', methods=['POST'])
 def delete_survey(survey_id):
     pass
@@ -121,11 +111,6 @@ def delete_survey(survey_id):
 def take_survey(survey_id):
     survey = survey_repository.get_survey_by_id(survey_id=survey_id)
     return render_template('survey/take.html', survey=survey)
-
-
-@bp.route('/<int:survey_id>')
-def view_survey(survey_id):
-    pass
 
 
 @bp.route('/<int:survey_id>/submit', methods=['POST'])
@@ -148,7 +133,6 @@ def submit_survey(survey_id):
         qid = question.id
         key = f"question_{qid}"
 
-        # Проверяем обязательные вопросы
         if question.required:
             if question.question_type.value == "text":
                 answer = form_data.get(key)
@@ -168,7 +152,6 @@ def submit_survey(survey_id):
                     errors.append(f"Вопрос '{question.question_text}' требует ответа")
                     continue
 
-        # Сохраняем ответы
         if question.question_type.value == "text":
             answer = form_data.get(key)
             if answer:

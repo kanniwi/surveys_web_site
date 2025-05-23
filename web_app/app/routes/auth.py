@@ -66,11 +66,3 @@ def register():
         
         flash('Заполните все поля','danger')
     return render_template('auth/register.html')
-    
-
-        
-        
-
-
-        
-        

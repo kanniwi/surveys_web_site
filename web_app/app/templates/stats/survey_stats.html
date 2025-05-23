@@ -3,10 +3,14 @@
 {% block content %}
 <div class="container py-5">
     <div class="card shadow-sm rounded-4 p-4 text-center bg-light">
-        <h2 class="mb-4">{{ survey.title }}</h2>
+        <h2 class="mb-4 d-flex justify-content-between align-items-center">
+            {{ survey.title }}
+            <a href="{{ url_for('stats.export_survey_statistics', survey_id=survey.id) }}" class="btn btn-primary btn-sm">
+                Экспорт в CSV
+            </a>
+        </h2>
 
         {% for question in survey.questions %}
-
             <div class="mb-3">
                 <h5 class="mb-4">{{ loop.index }}. {{ question.question_text }}</h5>
             </div>
@@ -23,9 +27,9 @@
                 {% endif %}
             </div>
         {% endfor %}
-
     </div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
