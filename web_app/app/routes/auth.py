@@ -49,6 +49,11 @@ def register():
         password = request.form.get('password')
         password_confirm = request.form.get('password_confirm')
         
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Пользователь с таким email уже существует', 'danger')
+            return redirect(url_for('auth.register'))
+        
         if email and username and password and password_confirm:
             if user_repository.exists_by_username(username):
                 flash('Пользователь с таким именем уже существует', 'warning')
