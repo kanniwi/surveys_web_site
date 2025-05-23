@@ -48,35 +48,38 @@ def create_survey():
 
         form_data = request.form.to_dict(flat=False)
 
-        questions_texts = form_data.get('questions[][text]', [])
-        questions_types = form_data.get('questions[][type]', [])
-        questions_required = form_data.get('questions[][required]', [])
-        questions_answers = form_data.get('questions[][answers][]', [])
+        # Get all question indices from the form data
+        question_indices = set()
+        for key in form_data.keys():
+            if key.startswith('questions[') and '][text]' in key:
+                # Extract index from key like 'questions[0][text]'
+                index = key.split('[')[1].split(']')[0]
+                question_indices.add(int(index))
 
-        answer_index = 0
-
-        for i, question_text in enumerate(questions_texts):
-            q_type = questions_types[i]
-            is_required = i < len(questions_required)
+        # Process questions in order
+        for index in sorted(question_indices):
+            question_text = form_data.get(f'questions[{index}][text]', [''])[0]
+            question_type = form_data.get(f'questions[{index}][type]', ['single'])[0]
+            is_required = f'questions[{index}][required]' in form_data
 
             new_question = question_repository.create_question(
                 survey_id=new_survey.id,
                 question_text=question_text,
-                question_type=QuestionType(q_type)
+                question_type=QuestionType(question_type)
             )
 
             db.session.flush()
 
-            if q_type in ['single', 'multiple']:
-                while answer_index < len(questions_answers):
-                    answer_text = questions_answers[answer_index]
-                    if not answer_text.strip():
-                        break
-                    question_repository.add_option_to_question(
-                        question_id=new_question.id,
-                        option_text=answer_text
-                    )
-                    answer_index += 1
+            if question_type in ['single', 'multiple']:
+                # Get all answers for this question
+                answer_key = f'questions[{index}][answers][]'
+                if answer_key in form_data:
+                    for answer_text in form_data[answer_key]:
+                        if answer_text.strip():
+                            question_repository.add_option_to_question(
+                                question_id=new_question.id,
+                                option_text=answer_text
+                            )
 
         db.session.commit()
         flash("Опрос успешно создан!", "success")

@@ -77,40 +77,48 @@
 </template>
 
 <script>
+let questionIndex = 0;
+
 function addQuestion() {
     const container = document.getElementById('questions-container');
     const template = document.getElementById('question-template');
     const questionNode = template.content.cloneNode(true);
 
-    // Вставляем вопрос
+    // Заменить все [] в именах на [questionIndex]
+    questionNode.querySelectorAll('[name]').forEach(input => {
+        input.name = input.name.replace('questions[][', `questions[${questionIndex}][`);
+    });
+
     container.appendChild(questionNode);
 
-    // Добавляем 1 ответ по умолчанию и обновляем иконки
     const lastQuestion = container.lastElementChild;
-    const answersContainer = lastQuestion.querySelector('.answers-container');
-    const addAnswerBtn = lastQuestion.querySelector('.btn-add-answer');
-    addAnswerBtn.onclick = () => addAnswer(addAnswerBtn);
+    const select = lastQuestion.querySelector('select');
+    select.setAttribute('data-question-index', questionIndex);
 
-    addAnswer(addAnswerBtn);
-
-    // Навесить обработчик смены типа вопроса
-    const select = lastQuestion.querySelector('select[name="questions[][type]"]');
-    select.onchange = () => onQuestionTypeChange(select);
-
-    // Инициализировать иконки и видимость под тип по умолчанию
+    // остальное как раньше
+    addAnswer(lastQuestion.querySelector('.btn-add-answer'), questionIndex);
     onQuestionTypeChange(select);
+
+    questionIndex++;
 }
 
-function addAnswer(button) {
-    const answersContainer = button.closest('.card-body').querySelector('.answers-container');
+
+function addAnswer(button, questionIdx = null) {
+    const cardBody = button.closest('.card-body');
+    const answersContainer = cardBody.querySelector('.answers-container');
     const answerTemplate = document.getElementById('answer-template').content.cloneNode(true);
 
-    answersContainer.appendChild(answerTemplate);
+    // Определяем индекс вопроса
+    const select = cardBody.querySelector('select');
+    const qIndex = questionIdx !== null ? questionIdx : select.dataset.questionIndex;
 
-    // Обновляем иконки под текущий тип вопроса
-    const select = button.closest('.card-body').querySelector('select[name="questions[][type]"]');
+    const input = answerTemplate.querySelector('input');
+    input.name = `questions[${qIndex}][answers][]`;
+
+    answersContainer.appendChild(answerTemplate);
     updateAnswerIcons(answersContainer, select.value);
 }
+
 
 function removeQuestion(button) {
     button.closest('.question-block').remove();
