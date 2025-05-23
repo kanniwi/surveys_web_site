@@ -28,7 +28,6 @@
     </form>
 </div>
 
-
 <template id="question-template">
     <div class="card mb-4 question-block shadow-sm">
         <div class="card-body p-4">
@@ -39,7 +38,7 @@
                     </div>
 
                     <div class="answers-container mb-3"></div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addAnswer(this)">
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-add-answer" onclick="addAnswer(this)">
                         + Добавить ответ
                     </button>
                 </div>
@@ -49,7 +48,7 @@
                         <i class="bi bi-image"></i> 🖼 Прикрепить
                     </button>
 
-                    <select name="questions[][type]" class="form-select">
+                    <select name="questions[][type]" class="form-select" onchange="onQuestionTypeChange(this)">
                         <option value="single">Один вариант ответа</option>
                         <option value="multiple">Несколько вариантов</option>
                         <option value="text">Текстовый ответ</option>
@@ -69,11 +68,11 @@
     </div>
 </template>
 
-
 <template id="answer-template">
-    <div class="input-group mb-2">
+    <div class="input-group mb-2 answer-row">
+        <span class="input-group-text input-type-icon"></span>
         <input type="text" name="questions[][answers][]" class="form-control" placeholder="Ответ" required>
-        <button class="btn" type="button" onclick="this.parentElement.remove()">𐄂</button>
+        <button class="btn btn-outline-secondary" type="button" onclick="this.parentElement.remove()">𐄂</button>
     </div>
 </template>
 
@@ -83,21 +82,80 @@ function addQuestion() {
     const template = document.getElementById('question-template');
     const questionNode = template.content.cloneNode(true);
 
-    setTimeout(() => {
-        addAnswer(questionNode.querySelector('.btn-add-answer'));
-    }, 0);
-
+    // Вставляем вопрос
     container.appendChild(questionNode);
+
+    // Добавляем 1 ответ по умолчанию и обновляем иконки
+    const lastQuestion = container.lastElementChild;
+    const answersContainer = lastQuestion.querySelector('.answers-container');
+    const addAnswerBtn = lastQuestion.querySelector('.btn-add-answer');
+    addAnswerBtn.onclick = () => addAnswer(addAnswerBtn);
+
+    addAnswer(addAnswerBtn);
+
+    // Навесить обработчик смены типа вопроса
+    const select = lastQuestion.querySelector('select[name="questions[][type]"]');
+    select.onchange = () => onQuestionTypeChange(select);
+
+    // Инициализировать иконки и видимость под тип по умолчанию
+    onQuestionTypeChange(select);
 }
 
 function addAnswer(button) {
-    const answerTemplate = document.getElementById('answer-template').content.cloneNode(true);
     const answersContainer = button.closest('.card-body').querySelector('.answers-container');
+    const answerTemplate = document.getElementById('answer-template').content.cloneNode(true);
+
     answersContainer.appendChild(answerTemplate);
+
+    // Обновляем иконки под текущий тип вопроса
+    const select = button.closest('.card-body').querySelector('select[name="questions[][type]"]');
+    updateAnswerIcons(answersContainer, select.value);
 }
 
 function removeQuestion(button) {
     button.closest('.question-block').remove();
 }
+
+function onQuestionTypeChange(select) {
+    const cardBody = select.closest('.card-body');
+    const answersContainer = cardBody.querySelector('.answers-container');
+    const addAnswerBtn = cardBody.querySelector('.btn-add-answer');
+
+    if (select.value === 'text') {
+        // Скрываем и очищаем
+        answersContainer.style.display = 'none';
+        addAnswerBtn.style.display = 'none';
+        answersContainer.innerHTML = '';  // <-- очищаем ответы
+    } else {
+        answersContainer.style.display = '';
+        addAnswerBtn.style.display = '';
+        // Если нет ответов, добавляем один по умолчанию
+        if (answersContainer.children.length === 0) {
+            addAnswer(addAnswerBtn);
+        }
+        updateAnswerIcons(answersContainer, select.value);
+    }
+}
+
+
+// Добавление иконок радиокнопок или чекбоксов в ответы
+function updateAnswerIcons(container, type) {
+    const iconSpans = container.querySelectorAll('.input-type-icon');
+    iconSpans.forEach((span, i) => {
+        if (type === 'single') {
+            // Радиокнопка
+            span.innerHTML = `<input type="radio" disabled>`;
+        } else if (type === 'multiple') {
+            // Чекбокс
+            span.innerHTML = `<input type="checkbox" disabled>`;
+        } else {
+            span.innerHTML = '';
+        }
+    });
+}
 </script>
+
+<!-- Bootstrap Icons (если нужны) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
 {% endblock %}
