@@ -12,11 +12,11 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="surname" class="form-label">Фамилия</label>
-                    <input type="text" class="form-control" id="surname" name="surname" value="{{ current_user.surname }}" disabled>
+                    <input type="text" class="form-control" id="surname" name="surname" value="{{ current_user.surname or "" }}" disabled>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="name" class="form-label">Имя</label>
-                    <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name }}" disabled>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name or "" }}" disabled>
                 </div>
             </div>
 
@@ -47,6 +47,11 @@
                 <button type="submit" class="btn btn-primary d-none" id="save-btn">Сохранить</button>
             </div>
         </form>
+    </div>
+        <div class="mt-4">
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-md px-4 py-2">
+            <i class="bi bi-box-arrow-right me-2"></i>Выйти из профиля
+        </a>
     </div>
 </div>
 

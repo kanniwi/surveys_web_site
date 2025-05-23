@@ -12,14 +12,15 @@ user_response_repository = UserResponseRepository()
 
 @bp.route('/catalog')
 def catalog():
-    surveys_with_counts = survey_repository.get_all_surveys_with_counts()
+    surveys_with_counts = survey_repository.get_surveys_with_counts()
     return render_template('survey/catalog.html', surveys=surveys_with_counts)
 
 @bp.route('/my_surveys')
 @login_required
 def my_surveys():
-    surveys_with_counts = survey_repository.get_all_surveys_with_counts()
+    surveys_with_counts = survey_repository.get_surveys_with_counts(user_id=current_user.id)
     return render_template('survey/my_surveys.html', surveys=surveys_with_counts)
+
 
 
 @bp.route('/create', methods=['GET', 'POST'])

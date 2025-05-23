@@ -41,9 +41,12 @@ class SurveyRepository:
             db.session.delete(survey)
             db.session.commit()
             
-    def get_all_surveys_with_counts(self):
-        surveys = self.get_all_surveys()
+    def get_surveys_with_counts(self, user_id=None):
+        query = Survey.query
+        if user_id is not None:
+            query = query.filter_by(user_id=user_id)
 
+        surveys = query.all()
         survey_ids = [s.id for s in surveys]
 
         question_counts = dict(
@@ -69,6 +72,7 @@ class SurveyRepository:
             })
 
         return result
+
 
 
     def get_survey_with_stats(self, survey_id):
@@ -129,10 +133,6 @@ class SurveyRepository:
                     gender_counts['female'][option.option_text] = female_count
                     gender_counts['not_s'][option.option_text] = not_selected_count
                     gender_counts['other'][option.option_text] = other_count
-                    
-                    
-            # else:
-            #     pass
 
             question.gender_counts = gender_counts
 
