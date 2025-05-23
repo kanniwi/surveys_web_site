@@ -16,6 +16,15 @@
                         {% endif %}
                     </label>
 
+                    {% if question.image_path %}
+                        <div class="mb-3">
+                            <img src="{{ url_for('static', filename=question.image_path) }}" 
+                                 alt="Question image" 
+                                 class="img-fluid rounded" 
+                                 style="max-height: 300px;">
+                        </div>
+                    {% endif %}
+
                     {% if question.question_type.value == 'text' %}
                         <input type="text" 
                                name="question_{{ question.id }}" 

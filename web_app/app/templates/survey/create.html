@@ -46,10 +46,14 @@
                 <div class="col-md-4 d-flex flex-column gap-3">
                     <label class="btn btn-img-upload">
                         <i class="bi bi-image"></i> 🖼 Прикрепить изображение
-                        <input type="file" name="questions[][image]" class="d-none question-image-input" accept="image/*">
+                        <input type="file" name="questions[][image]" class="d-none question-image-input" accept="image/*" onchange="previewImage(this)">
                     </label>
-
-
+                    <div class="image-preview-container d-none">
+                        <img src="" alt="Preview" class="img-preview img-fluid rounded mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="removeImage(this)">
+                            Удалить изображение
+                        </button>
+                    </div>
 
                     <select name="questions[][type]" class="form-select" onchange="onQuestionTypeChange(this)">
                         <option value="single">Один вариант ответа</option>
@@ -156,6 +160,33 @@ function updateAnswerIcons(container, type) {
             span.innerHTML = '';
         }
     });
+}
+
+function previewImage(input) {
+    const container = input.closest('.card-body');
+    const previewContainer = container.querySelector('.image-preview-container');
+    const preview = previewContainer.querySelector('.img-preview');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.classList.remove('d-none');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage(button) {
+    const container = button.closest('.card-body');
+    const previewContainer = container.querySelector('.image-preview-container');
+    const fileInput = container.querySelector('.question-image-input');
+    
+    previewContainer.classList.add('d-none');
+    previewContainer.querySelector('.img-preview').src = '';
+    fileInput.value = '';
 }
 </script>
 

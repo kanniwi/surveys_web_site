@@ -3,8 +3,8 @@ from flask_login import login_required, current_user
 from app.repositories import SurveyRepository, QuestionRepository, UserResponseRepository
 from app.models import Survey, QuestionType, SurveyStatus, db
 from datetime import datetime, timedelta
-from werkzeug.utils import secure_filename
 import os
+from werkzeug.utils import secure_filename
 
 
 bp = Blueprint('survey', __name__, url_prefix='/surveys')
@@ -44,39 +44,43 @@ def create_survey():
             status=SurveyStatus.active
         )
 
-        db.session.flush()  # чтобы получить ID созданного опроса
+        db.session.flush()
 
         form_data = request.form.to_dict(flat=False)
-        files_data = request.files
+        files = request.files.to_dict(flat=False)
 
+        # Get all question indices from the form data
         question_indices = set()
-        for key in form_data:
+        for key in form_data.keys():
             if key.startswith('questions[') and '][text]' in key:
                 index = key.split('[')[1].split(']')[0]
                 question_indices.add(int(index))
 
+        # Process questions in order
         for index in sorted(question_indices):
             question_text = form_data.get(f'questions[{index}][text]', [''])[0]
             question_type = form_data.get(f'questions[{index}][type]', ['single'])[0]
-            required = f'questions[{index}][required]' in form_data
+            is_required = f'questions[{index}][required]' in form_data
 
-            # Обработка изображения, если есть
-            image_file = files_data.get(f'questions[{index}][image]')
+            # Handle image upload
             image_path = None
-            if image_file and image_file.filename != '':
-                filename = secure_filename(image_file.filename)
-                upload_dir = os.path.join('static', 'uploads')
-                os.makedirs(upload_dir, exist_ok=True)
-                filepath = os.path.join(upload_dir, filename)
-                image_file.save(filepath)
-                image_path = filepath  # или только `filename`, если отдаёшь через url_for('static', ...)
+            if f'questions[{index}][image]' in files:
+                image_file = files[f'questions[{index}][image]'][0]
+                if image_file and image_file.filename:
+                    # Generate unique filename
+                    filename = secure_filename(image_file.filename)
+                    unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
+                    image_path = f"uploads/questions/{unique_filename}"
+                    
+                    # Save the file
+                    image_file.save(os.path.join('app/static', image_path))
 
             new_question = question_repository.create_question(
                 survey_id=new_survey.id,
                 question_text=question_text,
                 question_type=QuestionType(question_type),
-                required=required,
-                image_path=image_path  # Убедись, что поле в модели есть
+                required=is_required,
+                image_path=image_path
             )
 
             db.session.flush()
