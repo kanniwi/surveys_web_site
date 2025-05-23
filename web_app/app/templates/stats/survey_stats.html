@@ -5,98 +5,137 @@
     <div class="card shadow-sm rounded-4 p-4 text-center bg-light">
         <h2 class="mb-4">{{ survey.title }}</h2>
 
-        <div class="row justify-content-center">
         {% for question in survey.questions %}
-            <div class="col-md-6 mb-5">
-                <h5 class="mb-3">{{ loop.index }}. {{ question.question_text }}</h5>
-                <canvas id="chart_{{ question.id }}"></canvas>
+
+            <div class="mb-3">
+                <h5 class="mb-4">{{ loop.index }}. {{ question.question_text }}</h5>
+            </div>
+
+            <div class="row justify-content-center mb-3">
+                <div class="col-md-6 mb-4">
+                    <canvas id="pie_chart_{{ question.id }}" class="canvas-pie"></canvas>
+                </div>
+
+                {% if question.question_type.value != 'text' %}
+                <div class="col-md-6 mb-2">
+                    <canvas id="bar_chart_{{ question.id }}" class="canvas-chart"></canvas>
+                </div>
+                {% endif %}
             </div>
         {% endfor %}
-        </div>
+
     </div>
 </div>
 
-<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const colors = ['#f28b82', '#fbbc04', '#34a853', '#4285f4', '#a142f4', '#ff6d01', '#46bdc6'];
+
     {% for question in survey.questions %}
+    {
+        let pieCanvas = document.getElementById("pie_chart_{{ question.id }}");
+
+        let labels = [];
+        let data = [];
+
         {% if question.question_type.value == 'text' %}
-            // Диаграмма для текстового вопроса
-            new Chart(document.getElementById("chart_{{ question.id }}"), {
-                type: "pie",
-                data: {
-                    labels: [
-                        {% for stat in question.text_stats %}
-                            "{{ stat.text }}"{% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    ],
-                    datasets: [{
-                        label: "Ответы",
-                        data: [
-                            {% for stat in question.text_stats %}
-                                {{ stat.count }}{% if not loop.last %}, {% endif %}
-                            {% endfor %}
-                        ],
-                        backgroundColor: [
-                            '#f28b82', '#fbbc04', '#34a853', '#4285f4', '#a142f4', '#ff6d01', '#46bdc6'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.label + ": " + context.parsed;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+            labels = [{% for stat in question.text_stats %}"{{ stat.text }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+            data = [{% for stat in question.text_stats %}{{ stat.count }}{% if not loop.last %}, {% endif %}{% endfor %}];
         {% else %}
-            // Диаграмма для вопросов с вариантами
-            new Chart(document.getElementById("chart_{{ question.id }}"), {
+            labels = [{% for option in question.options %}"{{ option.option_text }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+            data = [{% for option in question.options %}{{ option.vote_count or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
+        {% endif %}
+
+        if (!pieCanvas) {
+            console.warn("Pie chart canvas not found for question {{ question.id }}");
+        } else if (labels.length === 0 || data.reduce((a,b) => a + b, 0) === 0) {
+            console.warn("Skipping pie chart for question {{ question.id }} due to no data");
+        } else {
+            new Chart(pieCanvas, {
                 type: "pie",
                 data: {
-                    labels: [
-                        {% for option in question.options %}
-                            "{{ option.option_text }}"{% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    ],
+                    labels: labels,
                     datasets: [{
                         label: "Ответы",
-                        data: [
-                            {% for option in question.options %}
-                                {{ option.vote_count or 0 }}{% if not loop.last %}, {% endif %}
-                            {% endfor %}
-                        ],
-                        backgroundColor: [
-                            '#f28b82', '#fbbc04', '#34a853', '#4285f4', '#a142f4', '#ff6d01', '#46bdc6'
-                        ],
+                        data: data,
+                        backgroundColor: colors,
                         borderWidth: 1
                     }]
                 },
-                options: {
+                options: { 
                     responsive: false, 
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.label + ": " + context.parsed;
+                    plugins: { legend: { position: 'bottom' } } 
+                }
+            });
+        }
+
+        {% if question.question_type.value != 'text' %}
+            let barCanvas = document.getElementById("bar_chart_{{ question.id }}");
+            if (!barCanvas) {
+                console.warn("Bar chart canvas not found for question {{ question.id }}");
+            } else {
+                new Chart(barCanvas, {
+                    type: "bar",
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: "Мужчины",
+                                data: [
+                                    {% for option in question.options %}
+                                        {{ question.gender_counts['male'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                ],
+                                backgroundColor: "#4285f4"
+                            },
+                            {
+                                label: "Женщины",
+                                data: [
+                                    {% for option in question.options %}
+                                        {{ question.gender_counts['female'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                ],
+                                backgroundColor: "#f28b82"
+                            },
+                            {
+                                label: "Не указано",
+                                data: [
+                                    {% for option in question.options %}
+                                        {{ question.gender_counts['not_s'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                ],
+                                backgroundColor: "#a142f4"
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: "bottom" },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ": " + context.parsed.y;
+                                    }
                                 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: "Количество ответов" }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
         {% endif %}
+    }
     {% endfor %}
 });
+
 </script>
+
+
 {% endblock %}
