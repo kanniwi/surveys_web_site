@@ -118,7 +118,7 @@
     display: block;
 }
 
-/* Для круговых диаграмм */
+
 .canvas-pie {
     width: 250px;
     height: 250px;
@@ -126,7 +126,6 @@
     display: block;
 }
 
-/* Для столбчатых диаграмм — больше ширина */
 .canvas-bar {
     width: 100%;
     height: 400px;
@@ -134,3 +133,66 @@
     display: block;
 }
 
+.icon-box {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    height: 100%;
+    text-align: center;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: #4e73df;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto 1rem;
+}
+
+.bg-light-primary { background-color: #e3f2fd; }
+.bg-light-success { background-color: #e8f5e9; }
+.bg-light-info { background-color: #e1f5fe; }
+
+
+
+.hero-section {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.1);
+}
+
+.btn-primary {
+    transition: all 0.3s ease;
+    background-color: #1890ff;
+}
+
+.btn-outline-primary{
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(24, 144, 255, 0.25);
+}
+
+.btn-outline-primary:hover {
+    transform: translateY(-2px);
+    background-color: rgba(24, 144, 255, 0.1);
+}
