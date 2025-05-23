@@ -3,6 +3,9 @@ from flask_login import login_required, current_user
 from app.repositories import SurveyRepository, QuestionRepository, UserResponseRepository
 from app.models import Survey, QuestionType, SurveyStatus, db
 from datetime import datetime, timedelta
+from werkzeug.utils import secure_filename
+import os
+
 
 bp = Blueprint('survey', __name__, url_prefix='/surveys')
 
@@ -32,7 +35,6 @@ def create_survey():
         start_date = datetime.now()
         end_date = datetime.now() + timedelta(days=365)
 
-
         new_survey = survey_repository.create_survey(
             title=title,
             description=description,
@@ -42,36 +44,44 @@ def create_survey():
             status=SurveyStatus.active
         )
 
-        # обновление сессии, чтобы получить айди нового опроса
-        db.session.flush()
-
+        db.session.flush()  # чтобы получить ID созданного опроса
 
         form_data = request.form.to_dict(flat=False)
+        files_data = request.files
 
-        # Get all question indices from the form data
         question_indices = set()
-        for key in form_data.keys():
+        for key in form_data:
             if key.startswith('questions[') and '][text]' in key:
-                # Extract index from key like 'questions[0][text]'
                 index = key.split('[')[1].split(']')[0]
                 question_indices.add(int(index))
 
-        # Process questions in order
         for index in sorted(question_indices):
             question_text = form_data.get(f'questions[{index}][text]', [''])[0]
             question_type = form_data.get(f'questions[{index}][type]', ['single'])[0]
-            is_required = f'questions[{index}][required]' in form_data
+            required = f'questions[{index}][required]' in form_data
+
+            # Обработка изображения, если есть
+            image_file = files_data.get(f'questions[{index}][image]')
+            image_path = None
+            if image_file and image_file.filename != '':
+                filename = secure_filename(image_file.filename)
+                upload_dir = os.path.join('static', 'uploads')
+                os.makedirs(upload_dir, exist_ok=True)
+                filepath = os.path.join(upload_dir, filename)
+                image_file.save(filepath)
+                image_path = filepath  # или только `filename`, если отдаёшь через url_for('static', ...)
 
             new_question = question_repository.create_question(
                 survey_id=new_survey.id,
                 question_text=question_text,
-                question_type=QuestionType(question_type)
+                question_type=QuestionType(question_type),
+                required=required,
+                image_path=image_path  # Убедись, что поле в модели есть
             )
 
             db.session.flush()
 
             if question_type in ['single', 'multiple']:
-                # Get all answers for this question
                 answer_key = f'questions[{index}][answers][]'
                 if answer_key in form_data:
                     for answer_text in form_data[answer_key]:
@@ -127,12 +137,34 @@ def submit_survey(survey_id):
         flash("Опрос не найден.", "danger")
         return redirect(url_for("survey.catalog"))
 
-    form_data = request.form  
+    form_data = request.form
+    errors = []
 
     for question in survey.questions:
         qid = question.id
         key = f"question_{qid}"
 
+        # Проверяем обязательные вопросы
+        if question.required:
+            if question.question_type.value == "text":
+                answer = form_data.get(key)
+                if not answer or not answer.strip():
+                    errors.append(f"Вопрос '{question.question_text}' требует ответа")
+                    continue
+
+            elif question.question_type.value == "single":
+                option_id = form_data.get(key)
+                if not option_id:
+                    errors.append(f"Вопрос '{question.question_text}' требует ответа")
+                    continue
+
+            elif question.question_type.value == "multiple":
+                option_ids = form_data.getlist(key + "[]")
+                if not option_ids:
+                    errors.append(f"Вопрос '{question.question_text}' требует ответа")
+                    continue
+
+        # Сохраняем ответы
         if question.question_type.value == "text":
             answer = form_data.get(key)
             if answer:
@@ -154,7 +186,7 @@ def submit_survey(survey_id):
                 )
 
         elif question.question_type.value == "multiple":
-            option_ids = form_data.getlist(key + "[]") 
+            option_ids = form_data.getlist(key + "[]")
             for opt_id in option_ids:
                 user_response_repo.save_response(
                     user_id=current_user.id,
@@ -162,6 +194,11 @@ def submit_survey(survey_id):
                     question_id=qid,
                     option_id=int(opt_id)
                 )
+
+    if errors:
+        for error in errors:
+            flash(error, "danger")
+        return redirect(url_for("survey.take_survey", survey_id=survey_id))
 
     flash("Ваши ответы успешно отправлены!", "success")
     return redirect(url_for("survey.catalog"))

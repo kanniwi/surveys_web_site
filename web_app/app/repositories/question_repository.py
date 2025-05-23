@@ -7,15 +7,18 @@ class QuestionRepository:
     def get_questions_by_survey_id(self, survey_id):
         return db.session.query(Question).filter_by(survey_id=survey_id).all()
     
-    def create_question(self, survey_id, question_text, question_type):
+    def create_question(self, survey_id, question_text, question_type, required=False, image_path=None):
         new_question = Question(
             survey_id=survey_id,
             question_text=question_text,
-            question_type=question_type
+            question_type=question_type,
+            required=required,
+            image_path=image_path
         )
         db.session.add(new_question)
         db.session.commit()
         return new_question
+
     
     def update_question(self, question_id, **kwargs):
         question = self.get_question_by_id(question_id)

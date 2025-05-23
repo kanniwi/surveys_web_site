@@ -56,7 +56,9 @@ class Question(db.Model):
     survey_id = db.Column(db.Integer, db.ForeignKey('surveys.id'), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
     question_type = db.Column(db.Enum(QuestionType), nullable=False)
-    
+    image_path = db.Column(db.String(255), nullable=True)
+    required = db.Column(db.Boolean, default=False, nullable=False)
+
     survey = db.relationship('Survey', back_populates='questions', lazy='joined')
     options = db.relationship('Option', back_populates='question', lazy='joined')
     user_responses = db.relationship('UserResponse', back_populates='question', lazy=True)
