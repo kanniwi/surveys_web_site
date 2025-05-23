@@ -1,6 +1,6 @@
-from app.models import db, Survey, SurveyStatus
+from app.models import db, Survey, SurveyStatus, Question, UserResponse
 from sqlalchemy import func, distinct
-from app.models import Question, UserResponse
+from collections import Counter
 
 class SurveyRepository:
 
@@ -69,3 +69,71 @@ class SurveyRepository:
             })
 
         return result
+
+
+    def get_survey_with_stats(self, survey_id):
+        survey = Survey.query \
+            .options(
+                db.joinedload(Survey.questions)
+                    .joinedload(Question.options),
+                db.joinedload(Survey.questions)
+                    .joinedload(Question.user_responses)
+                    .joinedload(UserResponse.user)
+            ) \
+            .filter(Survey.id == survey_id) \
+            .first()
+
+
+        if not survey:
+            return None
+
+        vote_counts = (
+            db.session.query(
+                UserResponse.option_id,
+                func.count(UserResponse.id)
+            )
+            .filter(UserResponse.option_id.isnot(None))
+            .group_by(UserResponse.option_id)
+            .all()
+        )
+        vote_count_dict = {option_id: count for option_id, count in vote_counts}
+
+        for question in survey.questions:
+            if question.question_type.value == 'text':
+                texts = [resp.text_answer for resp in question.user_responses if resp.text_answer]
+                counter = Counter(texts)
+                question.text_stats = [{"text": text, "count": count} for text, count in counter.items()]
+            else:
+                for option in question.options:
+                    option.vote_count = vote_count_dict.get(option.id, 0)
+
+
+            gender_counts = {
+                'male': {},
+                'female': {},
+                'not_s': {},
+                'other': {}            
+            }
+
+            if question.question_type.value != 'text':
+                for option in question.options:
+                    male_count = sum(1 for resp in question.user_responses
+                                    if resp.option_id == option.id and resp.user and resp.user.gender == 'male')
+                    female_count = sum(1 for resp in question.user_responses
+                                    if resp.option_id == option.id and resp.user and resp.user.gender == 'female')
+                    not_selected_count = sum(1 for resp in question.user_responses
+                                    if resp.option_id == option.id and resp.user and resp.user.gender == 'not_s')
+                    other_count = sum(1 for resp in question.user_responses
+                                    if resp.option_id == option.id and resp.user and resp.user.gender == 'other')
+                    gender_counts['male'][option.option_text] = male_count
+                    gender_counts['female'][option.option_text] = female_count
+                    gender_counts['not_s'][option.option_text] = not_selected_count
+                    gender_counts['other'][option.option_text] = other_count
+                    
+                    
+            # else:
+            #     pass
+
+            question.gender_counts = gender_counts
+
+        return survey

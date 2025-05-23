@@ -15,6 +15,12 @@ def catalog():
     surveys_with_counts = survey_repository.get_all_surveys_with_counts()
     return render_template('survey/catalog.html', surveys=surveys_with_counts)
 
+@bp.route('/my_surveys')
+@login_required
+def my_surveys():
+    surveys_with_counts = survey_repository.get_all_surveys_with_counts()
+    return render_template('survey/my_surveys.html', surveys=surveys_with_counts)
+
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -76,13 +82,7 @@ def create_survey():
         return redirect(url_for("survey.my_surveys"))
 
     return render_template("survey/create.html")
- 
 
-@bp.route('/my_surveys')
-@login_required
-def my_surveys():
-    surveys = survey_repository.get_surveys_by_user_id(current_user.id)
-    return render_template('survey/my_surveys.html', surveys=surveys)
 
 
 @bp.route('/<int:survey_id>/edit', methods=['GET', 'POST'])

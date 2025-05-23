@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-sm rounded-4 p-4 text-center bg-light">
+        <h2 class="mb-4">{{ survey.title }}</h2>
+
+        <div class="row justify-content-center">
+        {% for question in survey.questions %}
+            <div class="col-md-6 mb-5">
+                <h5 class="mb-3">{{ loop.index }}. {{ question.question_text }}</h5>
+                <canvas id="chart_{{ question.id }}"></canvas>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    {% for question in survey.questions %}
+        {% if question.question_type.value == 'text' %}
+            // Диаграмма для текстового вопроса
+            new Chart(document.getElementById("chart_{{ question.id }}"), {
+                type: "pie",
+                data: {
+                    labels: [
+                        {% for stat in question.text_stats %}
+                            "{{ stat.text }}"{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    ],
+                    datasets: [{
+                        label: "Ответы",
+                        data: [
+                            {% for stat in question.text_stats %}
+                                {{ stat.count }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        ],
+                        backgroundColor: [
+                            '#f28b82', '#fbbc04', '#34a853', '#4285f4', '#a142f4', '#ff6d01', '#46bdc6'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ": " + context.parsed;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        {% else %}
+            // Диаграмма для вопросов с вариантами
+            new Chart(document.getElementById("chart_{{ question.id }}"), {
+                type: "pie",
+                data: {
+                    labels: [
+                        {% for option in question.options %}
+                            "{{ option.option_text }}"{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    ],
+                    datasets: [{
+                        label: "Ответы",
+                        data: [
+                            {% for option in question.options %}
+                                {{ option.vote_count or 0 }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        ],
+                        backgroundColor: [
+                            '#f28b82', '#fbbc04', '#34a853', '#4285f4', '#a142f4', '#ff6d01', '#46bdc6'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false, 
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ": " + context.parsed;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+    {% endfor %}
+});
+</script>
+{% endblock %}

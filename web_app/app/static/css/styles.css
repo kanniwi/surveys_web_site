@@ -94,3 +94,26 @@
 .form-switch .form-check-input {
     margin-left: 0;
 }
+
+
+.form-check-input.sm {
+    width: 1em;
+    height: 1em;
+    margin-top: 0.3em;
+}
+
+.form-check.sm {
+    margin-bottom: 0.25rem;
+}
+
+.form-check-label.sm {
+    margin-left: 0.35em;
+    font-size: 0.95em;
+}
+
+.canvas {
+    max-width: 100px;  
+    max-height: 100px;
+    margin: 0 auto;   
+    display: block;
+}
