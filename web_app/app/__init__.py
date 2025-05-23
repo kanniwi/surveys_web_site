@@ -40,3 +40,5 @@ def create_app():
     app.route('/', endpoint='index')(main.index)
     
     return app
+
+app = create_app()
