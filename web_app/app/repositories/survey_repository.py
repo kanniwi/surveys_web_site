@@ -116,7 +116,8 @@ class SurveyRepository:
                 'male': {},
                 'female': {},
                 'not_s': {},
-                'other': {}            
+                'other': {},
+                'none': {}            
             }
 
             if question.question_type.value != 'text':
@@ -129,10 +130,13 @@ class SurveyRepository:
                                     if resp.option_id == option.id and resp.user and resp.user.gender == 'not_s')
                     other_count = sum(1 for resp in question.user_responses
                                     if resp.option_id == option.id and resp.user and resp.user.gender == 'other')
+                    none_count = sum(1 for resp in question.user_responses
+                                    if resp.option_id == option.id and resp.user and resp.user.gender is None)
                     gender_counts['male'][option.option_text] = male_count
                     gender_counts['female'][option.option_text] = female_count
                     gender_counts['not_s'][option.option_text] = not_selected_count
                     gender_counts['other'][option.option_text] = other_count
+                    gender_counts['none'][option.option_text] = none_count
 
             question.gender_counts = gender_counts
 
