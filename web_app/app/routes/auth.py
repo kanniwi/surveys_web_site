@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template, url_for, flash, redirect
 from flask_login import LoginManager, login_user, logout_user, login_required
-from app.models import User
+from app.models import User, UserRole
 from app.repositories import UserRepository
 from app.utils.helpers import password_strength 
 
@@ -65,7 +65,7 @@ def register():
                 flash('Пароль должен быть не менее 8 символов, содержать заглавные, строчные буквы и цифры', 'warning')
                 return render_template('auth/register.html')
                 
-            user_repository.create(username, email, password, 'user') 
+            user_repository.create(username, email, password, UserRole.user) 
             flash('Регистрация прошла успешно', 'success')
             return redirect(url_for('auth.login'))     
         

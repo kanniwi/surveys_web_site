@@ -29,7 +29,7 @@ class UserRepository:
         db.session.commit()
         return new_user
         
-    def update(self, user_id, name=None, surname=None, birth_date=None, password=None, gender=None, role=None):
+    def update(self, user_id, name=None, surname=None, birth_date=None, password=None, gender=None, role=None, is_blocked=None):
         user = self.get_user_by_id(user_id)
         if user:
             if name:
@@ -44,6 +44,8 @@ class UserRepository:
                 user.gender=gender
             if role:
                 user.role = role
+            if is_blocked != None:
+                user.is_blocked = is_blocked
             db.session.commit()
             
     def delete(self, user_id):

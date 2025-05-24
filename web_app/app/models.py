@@ -20,6 +20,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)     
     role = db.Column(db.Enum(UserRole), default=UserRole.guest, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    is_blocked = db.Column(db.Boolean, default=False)
+
     
     surveys = db.relationship('Survey', back_populates='author', lazy=True)
     user_responses = db.relationship('UserResponse', back_populates='user', lazy=True)
