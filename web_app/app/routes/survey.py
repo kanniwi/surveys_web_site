@@ -5,6 +5,8 @@ from app.models import Survey, QuestionType, SurveyStatus, db
 from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
+from app.utils.helpers import check_not_blocked, survey_active_required
+from datetime import timezone
 
 
 bp = Blueprint('survey', __name__, url_prefix='/surveys')
@@ -25,15 +27,15 @@ def my_surveys():
     return render_template('survey/my_surveys.html', surveys=surveys_with_counts)
 
 
-
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
+@check_not_blocked
 def create_survey():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
-        start_date = datetime.now()
-        end_date = datetime.now() + timedelta(days=365)
+        start_date = datetime.now(timezone.utc)
+        end_date = datetime(2999, 12, 31, tzinfo=timezone.utc)
 
         new_survey = survey_repository.create_survey(
             title=title,
@@ -49,30 +51,26 @@ def create_survey():
         form_data = request.form.to_dict(flat=False)
         files = request.files.to_dict(flat=False)
 
-        # Get all question indices from the form data
         question_indices = set()
         for key in form_data.keys():
             if key.startswith('questions[') and '][text]' in key:
                 index = key.split('[')[1].split(']')[0]
                 question_indices.add(int(index))
 
-        # Process questions in order
         for index in sorted(question_indices):
             question_text = form_data.get(f'questions[{index}][text]', [''])[0]
             question_type = form_data.get(f'questions[{index}][type]', ['single'])[0]
             is_required = f'questions[{index}][required]' in form_data
 
-            # Handle image upload
             image_path = None
             if f'questions[{index}][image]' in files:
                 image_file = files[f'questions[{index}][image]'][0]
                 if image_file and image_file.filename:
-                    # Generate unique filename
+
                     filename = secure_filename(image_file.filename)
                     unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
                     image_path = f"uploads/questions/{unique_filename}"
                     
-                    # Save the file
                     image_file.save(os.path.join('app/static', image_path))
 
             new_question = question_repository.create_question(
@@ -108,17 +106,15 @@ def delete_survey(survey_id):
     pass
 
 @bp.route('/<int:survey_id>/take', methods=['GET', 'POST'])
-def take_survey(survey_id):
-    survey = survey_repository.get_survey_by_id(survey_id=survey_id)
+@survey_active_required
+def take_survey(survey, survey_id):
     return render_template('survey/take.html', survey=survey)
 
 
 @bp.route('/<int:survey_id>/submit', methods=['POST'])
 @login_required
 def submit_survey(survey_id):
-    from app.repositories import SurveyRepository, QuestionRepository, UserResponseRepository
     survey_repo = SurveyRepository()
-    question_repo = QuestionRepository()
     user_response_repo = UserResponseRepository()
 
     survey = survey_repo.get_survey_by_id(survey_id)

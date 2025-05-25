@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 label: "Не указано",
                                 data: [
                                     {% for option in question.options %}
-                                        {{ question.gender_counts['none'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
+                                        {{ question.gender_counts['not_s'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
                                     {% endfor %}
                                 ],
                                 backgroundColor: "#a142f4"

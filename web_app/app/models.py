@@ -1,7 +1,7 @@
 from app import db
 import enum
 from flask_login import UserMixin
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 class UserRole(enum.Enum):
     admin = "admin"
@@ -31,20 +31,44 @@ class SurveyStatus(enum.Enum):
     active = "active"
     draft = "draft"
     closed = "closed"
-    
+
+
 class Survey(db.Model):
     __tablename__ = 'surveys'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    start_date = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-    end_date = db.Column(db.DateTime, default=datetime.now() + timedelta(days=365), nullable=True)
-    status = db.Column(db.Enum(SurveyStatus), default=SurveyStatus.draft, nullable=False)    
-    
+    start_date = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
+    end_date = db.Column(
+        db.DateTime(timezone=True),
+        default=lambda: datetime(2999, 12, 31, tzinfo=timezone.utc),
+        nullable=True
+    )
+    status = db.Column(db.Enum(SurveyStatus), default=SurveyStatus.draft, nullable=False)
+
     author = db.relationship('User', back_populates='surveys', lazy=True)
     questions = db.relationship('Question', back_populates='survey', lazy='joined', cascade='all, delete-orphan')
     user_responses = db.relationship('UserResponse', back_populates='survey', lazy=True, cascade='all, delete-orphan')
+
+    def is_active(self):
+        now = datetime.now(timezone.utc)
+        def make_aware(dt):
+            if dt is None:
+                return None
+            if dt.tzinfo is None:
+                return dt.replace(tzinfo=timezone.utc)
+            return dt
+
+        start = make_aware(self.start_date)
+        end = make_aware(self.end_date)
+
+        return start <= now <= end
+
     
     
 class QuestionType(enum.Enum):
