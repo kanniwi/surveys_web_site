@@ -34,8 +34,23 @@ def create_survey():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
-        start_date = datetime.now(timezone.utc)
-        end_date = datetime(2999, 12, 31, tzinfo=timezone.utc)
+        
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)
+        else:
+            start_date = datetime.now(timezone.utc)
+
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)
+        else:
+            end_date = datetime(2999, 12, 31, tzinfo=timezone.utc)
+            
+        print("start_date:", start_date)
+        print("end_date:", end_date)
+        print("now:", datetime.now(timezone.utc))
 
         new_survey = survey_repository.create_survey(
             title=title,

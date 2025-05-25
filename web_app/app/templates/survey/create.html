@@ -24,12 +24,12 @@
 
         <div class="mb-3">
             <label for="start_date" class="form-label">Дата начала</label>
-            <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
+            <input type="datetime-local" class="form-control" id="start_date" name="start_date">
         </div>
 
         <div class="mb-3">
             <label for="end_date" class="form-label">Дата окончания</label>
-            <input type="datetime-local" class="form-control" id="end_date" name="end_date" required>
+            <input type="datetime-local" class="form-control" id="end_date" name="end_date">
         </div>
 
 
@@ -199,6 +199,27 @@ function removeImage(button) {
     previewContainer.querySelector('.img-preview').src = '';
     fileInput.value = '';
 }
+</script>
+
+<script>
+  const form = document.querySelector('form');
+  const startInput = document.getElementById('start_date');
+  const endInput = document.getElementById('end_date');
+
+  function toUtcISOString(localDateStr) {
+    if (!localDateStr) return '';
+    const localDate = new Date(localDateStr);
+    return localDate.toISOString().slice(0,16);
+  }
+
+  form.addEventListener('submit', (e) => {
+    if (startInput.value) {
+      startInput.value = toUtcISOString(startInput.value);
+    }
+    if (endInput.value) {
+      endInput.value = toUtcISOString(endInput.value);
+    }
+  });
 </script>
 
 
