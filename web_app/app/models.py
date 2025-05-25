@@ -24,7 +24,7 @@ class User(UserMixin, db.Model):
 
     
     surveys = db.relationship('Survey', back_populates='author', lazy=True)
-    user_responses = db.relationship('UserResponse', back_populates='user', lazy=True)
+    user_responses = db.relationship('UserResponse', back_populates='user', lazy=True, cascade='all, delete-orphan')
     
     
 class SurveyStatus(enum.Enum):
@@ -43,8 +43,8 @@ class Survey(db.Model):
     status = db.Column(db.Enum(SurveyStatus), default=SurveyStatus.draft, nullable=False)    
     
     author = db.relationship('User', back_populates='surveys', lazy=True)
-    questions = db.relationship('Question', back_populates='survey', lazy='joined')
-    user_responses = db.relationship('UserResponse', back_populates='survey', lazy=True)
+    questions = db.relationship('Question', back_populates='survey', lazy='joined', cascade='all, delete-orphan')
+    user_responses = db.relationship('UserResponse', back_populates='survey', lazy=True, cascade='all, delete-orphan')
     
     
 class QuestionType(enum.Enum):
@@ -62,8 +62,8 @@ class Question(db.Model):
     required = db.Column(db.Boolean, default=False, nullable=False)
 
     survey = db.relationship('Survey', back_populates='questions', lazy='joined')
-    options = db.relationship('Option', back_populates='question', lazy='joined')
-    user_responses = db.relationship('UserResponse', back_populates='question', lazy=True)
+    options = db.relationship('Option', back_populates='question', lazy='joined', cascade='all, delete-orphan')
+    user_responses = db.relationship('UserResponse', back_populates='question', lazy=True, cascade='all, delete-orphan')
     
     
 class Option(db.Model):
@@ -73,7 +73,7 @@ class Option(db.Model):
     option_text = db.Column(db.Text, nullable=False)
     
     question = db.relationship('Question', back_populates='options', lazy=True)
-    user_responses = db.relationship('UserResponse', back_populates='option', lazy=True)
+    user_responses = db.relationship('UserResponse', back_populates='option', lazy=True, cascade='all, delete-orphan')
     
 
 class UserResponse(db.Model):

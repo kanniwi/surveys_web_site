@@ -58,7 +58,7 @@ def admin_surveys():
         flash('У вас нет прав для доступа к этой странице', 'danger')
         return redirect(url_for('main.index'))
     
-    surveys = survey_repository.all()
+    surveys = survey_repository.get_all_surveys()
     return render_template('main/surveys.html', surveys=surveys)
     
     
@@ -90,5 +90,24 @@ def toggle_block_user(user_id):
     user_repository.update(user_id=user.id, is_blocked=is_blocked)
     flash('Статус пользователя обновлён', 'info')
     return redirect(url_for('main.admin_users'))
+
+
+@bp.route('/surveys/<int:survey_id>/delete', methods=['POST'])
+@login_required
+def delete_survey(survey_id):
+    if current_user.role.value != 'admin':
+        flash('Недостаточно прав', 'danger')
+        return redirect(url_for('main.admin_surveys'))
+
+    survey = survey_repository.get_survey_by_id(survey_id)
+    if not survey:
+        flash('Опрос не найден', 'warning')
+        return redirect(url_for('main.admin_surveys'))
+
+    survey_repository.delete_survey(survey_id)
+    flash('Опрос удалён', 'success')
+    return redirect(url_for('main.admin_surveys'))
+
+
 
 
