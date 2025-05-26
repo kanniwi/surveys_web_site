@@ -7,6 +7,7 @@ import os
 from werkzeug.utils import secure_filename
 from app.utils.helpers import check_not_blocked, survey_active_required
 from datetime import timezone
+from math import ceil
 
 
 bp = Blueprint('survey', __name__, url_prefix='/surveys')
@@ -17,15 +18,37 @@ user_response_repository = UserResponseRepository()
 
 @bp.route('/catalog')
 def catalog():
-    surveys_with_counts = survey_repository.get_surveys_with_counts()
-    return render_template('survey/catalog.html', surveys=surveys_with_counts)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    all_surveys = survey_repository.get_surveys_with_counts()
+    total = len(all_surveys)
+
+    surveys_paginated = all_surveys[(page - 1) * per_page : page * per_page]
+    total_pages = ceil(total / per_page)
+
+    return render_template(
+        'survey/catalog.html',
+        surveys=surveys_paginated,
+        page=page,
+        total_pages=total_pages
+    )
 
 @bp.route('/my_surveys')
 @login_required
 def my_surveys():
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
     surveys_with_counts = survey_repository.get_surveys_with_counts(user_id=current_user.id)
-    return render_template('survey/my_surveys.html', surveys=surveys_with_counts)
-
+    total = len(surveys_with_counts)
+    surveys_paginated = surveys_with_counts[(page - 1) * per_page : page * per_page]
+    total_pages = ceil(total / per_page)
+    return render_template(
+        'survey/my_surveys.html',
+        surveys=surveys_paginated,
+        page=page,
+        total_pages=total_pages
+    )
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -119,7 +142,6 @@ def create_survey():
 @survey_active_required
 def take_survey(survey, survey_id):
     if current_user.is_authenticated:
-        # Check if user has already taken this survey
         existing_responses = user_response_repository.get_user_responses_for_survey(
             user_id=current_user.id,
             survey_id=survey_id

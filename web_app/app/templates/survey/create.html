@@ -32,6 +32,9 @@
             <input type="datetime-local" class="form-control" id="end_date" name="end_date">
         </div>
 
+        <div id="form-alert" class="alert alert-danger d-none text-center mt-3" role="alert">
+            Пожалуйста, добавьте хотя бы один вопрос перед отправкой опроса.
+        </div>
 
         <div class="text-center mt-4">
             <button type="submit" class="btn btn-primary btn-lg px-7">Создать опрос</button>
@@ -202,24 +205,36 @@ function removeImage(button) {
 </script>
 
 <script>
-  const form = document.querySelector('form');
-  const startInput = document.getElementById('start_date');
-  const endInput = document.getElementById('end_date');
+    const form = document.querySelector('form');
+    const startInput = document.getElementById('start_date');
+    const endInput = document.getElementById('end_date');
 
-  function toUtcISOString(localDateStr) {
-    if (!localDateStr) return '';
-    const localDate = new Date(localDateStr);
-    return localDate.toISOString().slice(0,16);
-  }
+    function toUtcISOString(localDateStr) {
+        if (!localDateStr) return '';
+        const localDate = new Date(localDateStr);
+        return localDate.toISOString().slice(0,16);
+    }
 
-  form.addEventListener('submit', (e) => {
-    if (startInput.value) {
-      startInput.value = toUtcISOString(startInput.value);
-    }
-    if (endInput.value) {
-      endInput.value = toUtcISOString(endInput.value);
-    }
-  });
+    form.addEventListener('submit', (e) => {
+        const questionsContainer = document.getElementById('questions-container');
+        const alertBox = document.getElementById('form-alert');
+
+        if (questionsContainer.children.length === 0) {
+            e.preventDefault(); 
+            alertBox.classList.remove('d-none');
+            return;
+        }
+
+        alertBox.classList.add('d-none');
+
+        if (startInput.value) {
+            startInput.value = toUtcISOString(startInput.value);
+        }
+        if (endInput.value) {
+            endInput.value = toUtcISOString(endInput.value);
+        }
+    });
+
 </script>
 
 
