@@ -115,14 +115,19 @@ def create_survey():
     return render_template("survey/create.html")
 
 
-
-@bp.route('/<int:survey_id>/delete', methods=['POST'])
-def delete_survey(survey_id):
-    pass
-
 @bp.route('/<int:survey_id>/take', methods=['GET', 'POST'])
 @survey_active_required
 def take_survey(survey, survey_id):
+    if current_user.is_authenticated:
+        # Check if user has already taken this survey
+        existing_responses = user_response_repository.get_user_responses_for_survey(
+            user_id=current_user.id,
+            survey_id=survey_id
+        )
+        if existing_responses:
+            flash("Вы уже проходили этот опрос.", "warning")
+            return redirect(url_for("survey.catalog"))
+    
     return render_template('survey/take.html', survey=survey)
 
 

@@ -165,12 +165,6 @@
     margin: 0 auto 1rem;
 }
 
-.bg-light-primary { background-color: #e3f2fd; }
-.bg-light-success { background-color: #e8f5e9; }
-.bg-light-info { background-color: #e1f5fe; }
-
-
-
 .hero-section {
     position: relative;
     overflow: hidden;
@@ -195,4 +189,12 @@
 .btn-outline-primary:hover {
     transform: translateY(-2px);
     background-color: rgba(24, 144, 255, 0.1);
+}
+
+.btn-outline-secondary {
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    transform: translateY(-2px);
 }
