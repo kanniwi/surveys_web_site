@@ -6,8 +6,16 @@
 </div>
 
 <div class="mb-4">
-    <button class="btn btn-secondary">Сортировка</button>
+    <form method="get" class="d-flex align-items-center gap-2">
+        <label for="sort" class="form-label mb-0">Сортировать по:</label>
+        <select name="sort" id="sort" class="form-select w-auto" onchange="this.form.submit()">
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Новизне</option>
+            <option value="responses" {% if sort == 'responses' %}selected{% endif %}>Количеству ответов</option>
+        </select>
+        <input type="hidden" name="page" value="{{ page }}">
+    </form>
 </div>
+
 
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-4">
     {% for entry in surveys %}

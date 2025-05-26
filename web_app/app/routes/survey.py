@@ -19,27 +19,43 @@ user_response_repository = UserResponseRepository()
 @bp.route('/catalog')
 def catalog():
     page = request.args.get('page', 1, type=int)
+    sort = request.args.get('sort', 'newest') 
     per_page = 20
 
     all_surveys = survey_repository.get_surveys_with_counts()
+
+    if sort == 'responses':
+        all_surveys.sort(key=lambda x: x['response_count'], reverse=True)
+    else:  
+        all_surveys.sort(key=lambda x: x['survey'].start_date, reverse=True)
+
     total = len(all_surveys)
+    total_pages = ceil(total / per_page)
 
     surveys_paginated = all_surveys[(page - 1) * per_page : page * per_page]
-    total_pages = ceil(total / per_page)
 
     return render_template(
         'survey/catalog.html',
         surveys=surveys_paginated,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        sort=sort 
     )
+
 
 @bp.route('/my_surveys')
 @login_required
 def my_surveys():
     page = request.args.get('page', 1, type=int)
     per_page = 20
+    sort = request.args.get('sort', 'newest') 
     surveys_with_counts = survey_repository.get_surveys_with_counts(user_id=current_user.id)
+    
+    if sort == 'responses':
+        surveys_with_counts.sort(key=lambda x: x['response_count'], reverse=True)
+    else:  
+        surveys_with_counts.sort(key=lambda x: x['survey'].start_date, reverse=True)
+    
     total = len(surveys_with_counts)
     surveys_paginated = surveys_with_counts[(page - 1) * per_page : page * per_page]
     total_pages = ceil(total / per_page)
