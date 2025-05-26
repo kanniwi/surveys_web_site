@@ -56,19 +56,15 @@
                                         type="checkbox"
                                         name="question_{{ question.id }}[]"
                                         id="option_{{ option.id }}"
-                                        value="{{ option.id }}"
-                                        onchange="document.getElementById('hidden_{{ question.id }}').disabled = this.checked">
+                                        value="{{ option.id }}">
                                     <label class="form-check-label sm" for="option_{{ option.id }}">
                                         {{ option.option_text }}
                                     </label>
                                 </div>
                             {% endfor %}
-                            <input type="hidden" 
-                                id="hidden_{{ question.id }}"
-                                name="question_{{ question.id }}_required" 
-                                {% if question.required %}required{% endif %}>
                         </div>
                     {% endif %}
+
                 </div>
             {% endfor %}
 
