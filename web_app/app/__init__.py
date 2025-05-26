@@ -23,6 +23,9 @@ def create_app():
     from app.routes import main
     app.register_blueprint(main.bp)
     
+    from app.routes import question
+    app.register_blueprint(question.bp)
+    
     from app.routes import survey
     app.register_blueprint(survey.bp)
     
