@@ -125,7 +125,7 @@ def create_survey():
                     unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
                     image_path = f"uploads/questions/{unique_filename}"
                     
-                    image_file.save(os.path.join('app/static', image_path))
+                    image_file.save(os.path.join('app', image_path))
 
             new_question = question_repository.create_question(
                 survey_id=new_survey.id,
