@@ -136,6 +136,3 @@ class SurveyRepository:
             question.gender_counts = gender_counts
 
         return survey
-
-
-# редактирование + 

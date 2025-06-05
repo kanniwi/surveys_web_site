@@ -12,22 +12,52 @@ bp = Blueprint('stats', __name__, url_prefix='/stats')
 survey_repository = SurveyRepository()
 
 
-@bp.route('/')
-@login_required
-def overall_stats():
-    pass
-
-
 @bp.route('/survey/<int:survey_id>')
 @login_required
 def survey_stats(survey_id):
     survey = survey_repository.get_survey_with_stats(survey_id)
-
     if not survey:
         flash("Опрос не найден", "danger")
-        return redirect(url_for("main.index"))
+        return redirect(url_for('main.index'))
 
-    return render_template("stats/survey_stats.html", survey=survey)
+    # Create a dictionary with the survey data for JSON serialization
+    survey_data = {
+        'id': survey.id,
+        'title': survey.title,
+        'questions': []
+    }
+
+    for question in survey.questions:
+        question_data = {
+            'id': question.id,
+            'text': question.question_text,
+            'type': question.question_type.value,
+            'options': []
+        }
+
+        if question.question_type.value == 'text':
+            # For text questions, include text responses
+            question_data['text_responses'] = question.text_stats
+        else:
+            # For single/multiple choice questions, include options with vote counts
+            for option in question.options:
+                option_data = {
+                    'id': option.id,
+                    'text': option.option_text,
+                    'vote_count': option.vote_count,
+                    'gender_counts': {
+                        'male': question.gender_counts['male'].get(option.option_text, 0),
+                        'female': question.gender_counts['female'].get(option.option_text, 0),
+                        'not_s': question.gender_counts['not_s'].get(option.option_text, 0)
+                    }
+                }
+                question_data['options'].append(option_data)
+
+        survey_data['questions'].append(question_data)
+
+    return render_template('stats/survey_stats.html', survey=survey, survey_data=survey_data)
+
+
 
 
 

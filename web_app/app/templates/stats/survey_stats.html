@@ -17,12 +17,16 @@
 
             <div class="row justify-content-center mb-3">
                 <div class="col-md-6 mb-4">
-                    <canvas id="pie_chart_{{ question.id }}" class="canvas-pie"></canvas>
+                    <div style="height: 300px;">
+                        <canvas id="pie_chart_{{ question.id }}" class="canvas-pie"></canvas>
+                    </div>
                 </div>
 
                 {% if question.question_type.value != 'text' %}
                 <div class="col-md-6 mb-2">
-                    <canvas id="bar_chart_{{ question.id }}" class="canvas-chart"></canvas>
+                    <div style="height: 300px;">
+                        <canvas id="bar_chart_{{ question.id }}" class="canvas-chart"></canvas>
+                    </div>
                 </div>
                 {% endif %}
             </div>
@@ -30,116 +34,12 @@
     </div>
 </div>
 
-
+<!-- Подключаем Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const colors = ['#f28b82', '#fbbc04', '#34a853', '#4285f4', '#a142f4', '#ff6d01', '#46bdc6'];
-
-    {% for question in survey.questions %}
-    {
-        let pieCanvas = document.getElementById("pie_chart_{{ question.id }}");
-
-        let labels = [];
-        let data = [];
-
-        {% if question.question_type.value == 'text' %}
-            labels = [{% for stat in question.text_stats %}"{{ stat.text }}"{% if not loop.last %}, {% endif %}{% endfor %}];
-            data = [{% for stat in question.text_stats %}{{ stat.count }}{% if not loop.last %}, {% endif %}{% endfor %}];
-        {% else %}
-            labels = [{% for option in question.options %}"{{ option.option_text }}"{% if not loop.last %}, {% endif %}{% endfor %}];
-            data = [{% for option in question.options %}{{ option.vote_count or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
-        {% endif %}
-
-        if (!pieCanvas) {
-            console.warn("Pie chart canvas not found for question {{ question.id }}");
-        } else if (labels.length === 0 || data.reduce((a,b) => a + b, 0) === 0) {
-            console.warn("Skipping pie chart for question {{ question.id }} due to no data");
-        } else {
-            new Chart(pieCanvas, {
-                type: "pie",
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: "Ответы",
-                        data: data,
-                        backgroundColor: colors,
-                        borderWidth: 1
-                    }]
-                },
-                options: { 
-                    responsive: false, 
-                    plugins: { legend: { position: 'bottom' } } 
-                }
-            });
-        }
-
-        {% if question.question_type.value != 'text' %}
-            let barCanvas = document.getElementById("bar_chart_{{ question.id }}");
-            if (!barCanvas) {
-                console.warn("Bar chart canvas not found for question {{ question.id }}");
-            } else {
-                new Chart(barCanvas, {
-                    type: "bar",
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: "Мужчины",
-                                data: [
-                                    {% for option in question.options %}
-                                        {{ question.gender_counts['male'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
-                                    {% endfor %}
-                                ],
-                                backgroundColor: "#4285f4"
-                            },
-                            {
-                                label: "Женщины",
-                                data: [
-                                    {% for option in question.options %}
-                                        {{ question.gender_counts['female'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
-                                    {% endfor %}
-                                ],
-                                backgroundColor: "#f28b82"
-                            },
-                            {
-                                label: "Не указано",
-                                data: [
-                                    {% for option in question.options %}
-                                        {{ question.gender_counts['not_s'][option.option_text] or 0 }}{% if not loop.last %}, {% endif %}
-                                    {% endfor %}
-                                ],
-                                backgroundColor: "#a142f4"
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: "bottom" },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ": " + context.parsed.y;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: { display: true, text: "Количество ответов" }
-                            }
-                        }
-                    }
-                });
-            }
-        {% endif %}
-    }
-    {% endfor %}
-});
-
+    const surveyData = {{ survey_data | tojson }};
 </script>
-
+<script src="{{ url_for('static', filename='js/survey_charts.js') }}"></script>
 
 {% endblock %}

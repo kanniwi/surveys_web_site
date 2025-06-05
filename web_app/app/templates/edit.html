@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4" id="edit-survey-container" data-question-count="{{ survey.questions|length }}">
+    <h2>Редактирование опроса: {{ survey.title }}</h2>
+    <form method="POST" enctype="multipart/form-data" id="edit-survey-form">
+        <div class="mb-3">
+            <label for="title" class="form-label">Название опроса</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ survey.title }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Описание</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ survey.description }}</textarea>
+        </div>
+
+        <div id="questions-container">
+            {% for question in survey.questions %}
+            <div class="question-block card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Вопрос</label>
+                                <input type="text" class="form-control" name="questions[{{ loop.index0 }}][text]" value="{{ question.text }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Тип вопроса</label>
+                                <select class="form-select" name="questions[{{ loop.index0 }}][type]" data-question-index="{{ loop.index0 }}">
+                                    <option value="single" {% if question.type == 'single' %}selected{% endif %}>Один ответ</option>
+                                    <option value="multiple" {% if question.type == 'multiple' %}selected{% endif %}>Несколько ответов</option>
+                                    <option value="text" {% if question.type == 'text' %}selected{% endif %}>Текстовый ответ</option>
+                                </select>
+                            </div>
+                            <div class="answers-container mb-3">
+                                {% if question.type != 'text' %}
+                                    {% for answer in question.answers %}
+                                    <div class="answer-row mb-2">
+                                        <div class="input-group">
+                                            <input type="{{ 'checkbox' if question.type == 'multiple' else 'radio' }}" class="form-check-input mt-2" name="questions[{{ loop.parent.loop.index0 }}][correct_answers][]" value="{{ loop.index0 }}" {% if answer.is_correct %}checked{% endif %}>
+                                            <input type="text" class="form-control" name="questions[{{ loop.parent.loop.index0 }}][answers][]" value="{{ answer.text }}" required>
+                                            <button type="button" class="btn btn-outline-secondary remove-answer">Удалить</button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            {% if question.type != 'text' %}
+                            <button type="button" class="btn btn-outline-primary btn-add-answer">Добавить ответ</button>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Изображение</label>
+                                <input type="file" class="form-control question-image-input" name="questions[{{ loop.index0 }}][image]" accept="image/*">
+                            </div>
+                            <div class="image-preview-container {% if not question.image %}d-none{% endif %}">
+                                <img src="{{ question.image }}" class="img-preview img-fluid mb-2" alt="Preview">
+                                <button type="button" class="btn btn-outline-danger remove-image">Удалить изображение</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger mt-3 remove-question">Удалить вопрос</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-3">
+            <button type="button" class="btn btn-primary" id="add-question-btn">Добавить вопрос</button>
+            <button type="submit" class="btn btn-success">Сохранить опрос</button>
+        </div>
+    </form>
+</div>
+
+<template id="question-template">
+    <div class="question-block card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label">Вопрос</label>
+                        <input type="text" class="form-control" name="questions[][text]" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Тип вопроса</label>
+                        <select class="form-select" name="questions[][type]">
+                            <option value="single">Один ответ</option>
+                            <option value="multiple">Несколько ответов</option>
+                            <option value="text">Текстовый ответ</option>
+                        </select>
+                    </div>
+                    <div class="answers-container mb-3"></div>
+                    <button type="button" class="btn btn-outline-primary btn-add-answer">Добавить ответ</button>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Изображение</label>
+                        <input type="file" class="form-control question-image-input" name="questions[][image]" accept="image/*">
+                    </div>
+                    <div class="image-preview-container d-none">
+                        <img src="" class="img-preview img-fluid mb-2" alt="Preview">
+                        <button type="button" class="btn btn-outline-danger remove-image">Удалить изображение</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline-danger mt-3 remove-question">Удалить вопрос</button>
+        </div>
+    </div>
+</template>
+
+<template id="answer-template">
+    <div class="answer-row mb-2">
+        <div class="input-group">
+            <input type="radio" class="form-check-input mt-2" name="questions[][correct_answers][]" value="0">
+            <input type="text" class="form-control" name="questions[][answers][]" required>
+            <button type="button" class="btn btn-outline-secondary remove-answer">Удалить</button>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endblock %} 
