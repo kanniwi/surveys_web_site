@@ -1,36 +1,234 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="card shadow-sm rounded-4 p-4 bg-light">
-        <h2 class="mb-4">Редактирование опроса</h2>
+<div class="container my-2">
+    <h2 class="mb-4 text-center">Редактирование опроса</h2>
 
-        <form method="POST">
-            <div class="mb-3">
-                <label for="title" class="form-label">Название опроса</label>
-                <input type="text" name="title" id="title" class="form-control" required value="{{ survey.title }}">
-            </div>
+    <form method="POST" action="{{ url_for('survey.edit_survey', survey_id=survey.id) }}" class="survey-form" enctype="multipart/form-data">
 
-            <div class="mb-3">
-                <label for="description" class="form-label">Описание</label>
-                <textarea name="description" id="description" class="form-control" rows="4">{{ survey.description }}</textarea>
-            </div>
+        <div class="mb-4">
+            <input type="text" name="title" class="form-control form-control-lg" placeholder="Название опроса" value="{{ survey.title }}" required>
+        </div>
 
-            <div class="mb-3">
-                <label for="start_date" class="form-label">Дата начала</label>
-                <input type="date" name="start_date" id="start_date" class="form-control" required value="{{ survey.start_date.strftime('%Y-%m-%d') }}">
-            </div>
+        <div class="mb-4">
+            <textarea name="description" class="form-control" placeholder="Описание опроса" rows="2">{{ survey.description }}</textarea>
+        </div>
 
-            <div class="mb-3">
-                <label for="end_date" class="form-label">Дата окончания</label>
-                <input type="date" name="end_date" id="end_date" class="form-control" required value="{{ survey.end_date.strftime('%Y-%m-%d') }}">
-            </div>
+        <div id="questions-container" class="questions-wrapper">
+            {% for question in questions %}
+            <div class="card mb-4 question-block shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-8 pe-4">
+                            <div class="mb-3">
+                                <input type="text" name="questions[{{ loop.index0 }}][text]" class="form-control question-input" value="{{ question.question_text }}" required>
+                            </div>
 
-            <div class="d-flex justify-content-between">
-                <a href="{{ url_for('stats.survey_stats', survey_id=survey.id) }}" class="btn btn-secondary">Отмена</a>
-                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                            <div class="answers-container mb-3">
+                                {% for answer in question.options %}
+                                <div class="input-group mb-2 answer-row">
+                                    <span class="input-group-text input-type-icon">
+                                        {% if question.type == 'single' %}
+                                            <input type="radio" disabled>
+                                        {% elif question.type == 'multiple' %}
+                                            <input type="checkbox" disabled>
+                                        {% endif %}
+                                    </span>
+                                    <input type="text" name="questions[{{ loop.index0 }}][answers][]" class="form-control" value="{{ answer.option_text }}" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="this.parentElement.remove()">𐄂</button>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            {% if question.type != 'text' %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-add-answer" onclick="addAnswer(this, {{ loop.index0 }})">
+                                + Добавить ответ
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4 d-flex flex-column gap-3">
+                            <label class="btn btn-img-upload">
+                                <i class="bi bi-image"></i> 🖼 Прикрепить изображение
+                                <input type="file" name="questions[{{ loop.index0 }}][image]" class="d-none question-image-input" accept="image/*" onchange="previewImage(this)">
+                            </label>
+
+                            <div class="image-preview-container {% if not question.image_url %}d-none{% endif %}">
+                                {% if question.image_url %}
+                                <img src="{{ url_for('static', filename=question.image_url) }}" class="img-preview img-fluid rounded mb-2">
+                                {% else %}
+                                <img src="" class="img-preview img-fluid rounded mb-2">
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="removeImage(this)">Удалить изображение</button>
+                            </div>
+
+                            <select name="questions[{{ loop.index0 }}][type]" class="form-select" onchange="onQuestionTypeChange(this)" data-question-index="{{ loop.index0 }}">
+                                <option value="single" {% if question.type == 'single' %}selected{% endif %}>Один вариант ответа</option>
+                                <option value="multiple" {% if question.type == 'multiple' %}selected{% endif %}>Несколько вариантов</option>
+                                <option value="text" {% if question.type == 'text' %}selected{% endif %}>Текстовый ответ</option>
+                            </select>
+
+                            <div class="form-check form-switch d-flex justify-content-between align-items-center">
+                                <label class="form-check-label">Обязательный вопрос</label>
+                                <input class="form-check-input" type="checkbox" name="questions[{{ loop.index0 }}][required]" value="true"
+                                    {% if question.required %}checked{% endif %}>
+                            </div>
+
+                            <button type="button" class="btn btn-outline-danger w-100" onclick="removeQuestion(this)">
+                                🗑 Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </form>
-    </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-grid gap-2 my-4">
+            <button type="button" class="btn btn-primary btn-add" onclick="addQuestion()">
+                <i class="bi bi-plus-lg"></i> Добавить вопрос
+            </button>
+        </div>
+
+        <div class="mb-3">
+            <label for="start_date" class="form-label">Дата начала</label>
+            <input type="datetime-local" class="form-control" id="start_date" name="start_date"
+                   value="{{ survey.start_date.isoformat()[:16] if survey.start_date }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="end_date" class="form-label">Дата окончания</label>
+            <input type="datetime-local" class="form-control" id="end_date" name="end_date"
+                   value="{{ survey.end_date.isoformat()[:16] if survey.end_date }}">
+        </div>
+
+        <div id="form-alert" class="alert alert-danger d-none text-center mt-3" role="alert">
+            Пожалуйста, добавьте хотя бы один вопрос перед отправкой.
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg px-7">Сохранить изменения</button>
+        </div>
+    </form>
 </div>
+
+<script>
+    let questionIndex = {{ questions|length }};
+
+    function addQuestion() {
+        const questionsContainer = document.getElementById('questions-container');
+        const questionBlock = document.createElement('div');
+        questionBlock.className = 'card mb-4 question-block shadow-sm';
+        questionBlock.innerHTML = `
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-md-8 pe-4">
+                        <div class="mb-3">
+                            <input type="text" name="questions[${questionIndex}][text]" class="form-control question-input" placeholder="Введите вопрос" required>
+                        </div>
+                        <div class="answers-container mb-3">
+                            <div class="input-group mb-2 answer-row">
+                                <span class="input-group-text input-type-icon">
+                                    <input type="radio" disabled>
+                                </span>
+                                <input type="text" name="questions[${questionIndex}][answers][]" class="form-control" placeholder="Вариант ответа" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="this.parentElement.remove()">𐄂</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-add-answer" onclick="addAnswer(this, ${questionIndex})">
+                            + Добавить ответ
+                        </button>
+                    </div>
+                    <div class="col-md-4 d-flex flex-column gap-3">
+                        <label class="btn btn-img-upload">
+                            <i class="bi bi-image"></i> 🖼 Прикрепить изображение
+                            <input type="file" name="questions[${questionIndex}][image]" class="d-none question-image-input" accept="image/*" onchange="previewImage(this)">
+                        </label>
+                        <div class="image-preview-container d-none">
+                            <img src="" class="img-preview img-fluid rounded mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="removeImage(this)">Удалить изображение</button>
+                        </div>
+                        <select name="questions[${questionIndex}][type]" class="form-select" onchange="onQuestionTypeChange(this)" data-question-index="${questionIndex}">
+                            <option value="single">Один вариант ответа</option>
+                            <option value="multiple">Несколько вариантов</option>
+                            <option value="text">Текстовый ответ</option>
+                        </select>
+                        <div class="form-check form-switch d-flex justify-content-between align-items-center">
+                            <label class="form-check-label">Обязательный вопрос</label>
+                            <input class="form-check-input" type="checkbox" name="questions[${questionIndex}][required]" value="true">
+                        </div>
+                        <button type="button" class="btn btn-outline-danger w-100" onclick="removeQuestion(this)">
+                            🗑 Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        questionsContainer.appendChild(questionBlock);
+        questionIndex++;
+    }
+
+    function addAnswer(button, questionIndex) {
+        const answersContainer = button.previousElementSibling;
+        const answerRow = document.createElement('div');
+        answerRow.className = 'input-group mb-2 answer-row';
+        answerRow.innerHTML = `
+            <span class="input-group-text input-type-icon">
+                <input type="radio" disabled>
+            </span>
+            <input type="text" name="questions[${questionIndex}][answers][]" class="form-control" placeholder="Вариант ответа" required>
+            <button class="btn btn-outline-secondary" type="button" onclick="this.parentElement.remove()">𐄂</button>
+        `;
+        answersContainer.appendChild(answerRow);
+    }
+
+    function removeQuestion(button) {
+        button.closest('.question-block').remove();
+    }
+
+    function onQuestionTypeChange(select) {
+        const questionBlock = select.closest('.question-block');
+        const answersContainer = questionBlock.querySelector('.answers-container');
+        const addAnswerButton = questionBlock.querySelector('.btn-add-answer');
+        const type = select.value;
+
+        if (type === 'text') {
+            answersContainer.innerHTML = '';
+            addAnswerButton.style.display = 'none';
+        } else {
+            if (answersContainer.children.length === 0) {
+                addAnswer(questionBlock.querySelector('.btn-add-answer'), select.dataset.questionIndex);
+            }
+            addAnswerButton.style.display = 'block';
+            const radioInputs = answersContainer.querySelectorAll('input[type="radio"]');
+            radioInputs.forEach(input => {
+                input.type = type === 'multiple' ? 'checkbox' : 'radio';
+            });
+        }
+    }
+
+    function previewImage(input) {
+        const container = input.closest('.col-md-4').querySelector('.image-preview-container');
+        const img = container.querySelector('.img-preview');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                container.classList.remove('d-none');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImage(button) {
+        const container = button.closest('.image-preview-container');
+        const input = container.previousElementSibling.querySelector('input[type="file"]');
+        input.value = '';
+        container.classList.add('d-none');
+        container.querySelector('.img-preview').src = '';
+    }
+</script>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 {% endblock %}

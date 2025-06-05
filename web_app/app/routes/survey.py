@@ -280,23 +280,68 @@ def edit_survey(survey_id):
             flash("Редактирование запрещено — опрос уже начался", "warning")
             return redirect(url_for('stats.survey_stats', survey_id=survey.id))
 
+    
+
     if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        start_date = request.form.get('start_date')
-        end_date = request.form.get('end_date')
+        form_data = request.form.to_dict(flat=False)
+        files = request.files.to_dict(flat=False)
 
-        if not title or not start_date or not end_date:
-            flash("Пожалуйста, заполните все поля", "danger")
-            return render_template("survey/edit.html", survey=survey)
+        survey.title = request.form.get('title')
+        survey.description = request.form.get('description')
 
-        survey.title = title
-        survey.description = description
-        survey.start_date = datetime.strptime(start_date, '%Y-%m-%d')
-        survey.end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
 
-        survey_repository.save(survey)
-        flash("Опрос успешно обновлён", "success")
-        return redirect(url_for('stats.survey_stats', survey_id=survey.id))
+        survey.start_date = datetime.strptime(start_date_str, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc) if start_date_str else datetime.now(timezone.utc)
+        survey.end_date = datetime.strptime(end_date_str, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc) if end_date_str else datetime(2999, 12, 31, tzinfo=timezone.utc)
 
-    return render_template("survey/edit.html", survey=survey)
+        for q in survey.questions:
+            question_repository.delete_question(q.id)
+
+        db.session.flush()
+
+        question_indices = set()
+        for key in form_data.keys():
+            if key.startswith('questions[') and '][text]' in key:
+                index = key.split('[')[1].split(']')[0]
+                question_indices.add(int(index))
+
+        for index in sorted(question_indices):
+            question_text = form_data.get(f'questions[{index}][text]', [''])[0]
+            question_type = form_data.get(f'questions[{index}][type]', ['single'])[0]
+            is_required = f'questions[{index}][required]' in form_data
+
+            image_path = None
+            if f'questions[{index}][image]' in files:
+                image_file = files[f'questions[{index}][image]'][0]
+                if image_file and image_file.filename:
+                    filename = secure_filename(image_file.filename)
+                    unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
+                    image_path = f"uploads/questions/{unique_filename}"
+                    image_file.save(os.path.join('app', image_path))
+
+            new_question = question_repository.create_question(
+                survey_id=survey.id,
+                question_text=question_text,
+                question_type=QuestionType(question_type),
+                required=is_required,
+                image_path=image_path
+            )
+
+            db.session.flush()
+
+            if question_type in ['single', 'multiple']:
+                answer_key = f'questions[{index}][answers][]'
+                if answer_key in form_data:
+                    for answer_text in form_data[answer_key]:
+                        if answer_text.strip():
+                            question_repository.add_option_to_question(
+                                question_id=new_question.id,
+                                option_text=answer_text
+                            )
+
+        db.session.commit()
+        flash("Опрос обновлен!", "success")
+        return redirect(url_for("survey.my_surveys"))
+
+    return render_template("survey/edit.html", survey=survey, questions=survey.questions)

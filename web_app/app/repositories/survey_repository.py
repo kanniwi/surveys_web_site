@@ -1,11 +1,14 @@
 from app.models import db, Survey, SurveyStatus, Question, UserResponse
 from sqlalchemy import func, distinct
 from collections import Counter
+from sqlalchemy.orm import joinedload
 
 class SurveyRepository:
 
-    def get_survey_by_id(self, survey_id): 
-        return db.session.query(Survey).filter_by(id=survey_id).first()   
+    def get_survey_by_id(self, survey_id):
+        return Survey.query.options(
+            joinedload(Survey.questions).joinedload(Question.options)
+        ).filter_by(id=survey_id).first()
     
     def get_surveys_by_user_id(self, user_id):
         return db.session.query(Survey).filter_by(user_id=user_id).all() 

@@ -33,10 +33,10 @@
                     <strong>Описание:</strong> {{ survey.description or '—' }}
                 </p>
                 <div class="mt-auto d-flex flex-column align-items-center gap-2">
-                    <a href="{{ url_for('stats.survey_stats', survey_id=survey.id) }}" class="btn btn-outline-secondary btn-sm w-100">Статистика</a>
+                    <a href="{{ url_for('stats.survey_stats', survey_id=survey.id) }}" class="btn btn-outline-primary btn-sm w-100">Статистика</a>
 
                     {% if survey.start_date > current_time %}
-                        <a href="{{ url_for('survey.edit_survey', survey_id=survey.id) }}" class="btn btn-outline-primary btn-sm w-100">Редактировать</a>
+                        <a href="{{ url_for('survey.edit_survey', survey_id=survey.id) }}" class="btn btn-outline-secondary btn-sm w-100">Редактировать</a>
                     {% endif %}
 
                 </div>
