@@ -59,13 +59,23 @@ def my_surveys():
     total = len(surveys_with_counts)
     surveys_paginated = surveys_with_counts[(page - 1) * per_page : page * per_page]
     total_pages = ceil(total / per_page)
+    current_utc_time = datetime.now(timezone.utc)
+
+    for entry in surveys_with_counts:
+        survey = entry['survey']
+        if survey.start_date.tzinfo is None:
+            survey.start_date = survey.start_date.replace(tzinfo=timezone.utc)
+
     return render_template(
         'survey/my_surveys.html',
         surveys=surveys_paginated,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        sort=sort,
+        current_time=current_utc_time
     )
-
+    
+    
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
 @check_not_blocked
@@ -243,3 +253,50 @@ def submit_survey(survey_id):
 
     flash("Ваши ответы успешно отправлены!", "success")
     return redirect(url_for("survey.catalog"))
+
+from datetime import datetime, timezone
+
+@bp.route('/<int:survey_id>/edit', methods=['GET', 'POST'])
+@login_required
+@check_not_blocked
+def edit_survey(survey_id):
+    survey = survey_repository.get_survey_by_id(survey_id)
+
+    if not survey:
+        flash("Опрос не найден", "danger")
+        return redirect(url_for('main.index'))
+
+    if survey.user_id != current_user.id and current_user.role != 'admin':
+        flash("У вас нет прав для редактирования этого опроса", "danger")
+        return redirect(url_for('main.index'))
+
+    if survey.start_date:
+        if survey.start_date.tzinfo is None:
+            survey_start = survey.start_date.replace(tzinfo=timezone.utc)
+        else:
+            survey_start = survey.start_date
+
+        if survey_start <= datetime.now(timezone.utc):
+            flash("Редактирование запрещено — опрос уже начался", "warning")
+            return redirect(url_for('stats.survey_stats', survey_id=survey.id))
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+
+        if not title or not start_date or not end_date:
+            flash("Пожалуйста, заполните все поля", "danger")
+            return render_template("survey/edit.html", survey=survey)
+
+        survey.title = title
+        survey.description = description
+        survey.start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        survey.end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+        survey_repository.save(survey)
+        flash("Опрос успешно обновлён", "success")
+        return redirect(url_for('stats.survey_stats', survey_id=survey.id))
+
+    return render_template("survey/edit.html", survey=survey)

@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+
+
 {% block content %}
 <div class="container my-2">
     <h2 class="text-center mb-4">Мои опросы</h2>
@@ -30,9 +32,15 @@
                     <strong>Количество ответов:</strong> {{ entry.response_count }}<br>
                     <strong>Описание:</strong> {{ survey.description or '—' }}
                 </p>
-                <div class="mt-auto d-flex justify-content-center">
-                    <a href="{{ url_for('stats.survey_stats', survey_id=survey.id) }}" class="btn btn-outline-secondary btn-sm">Статистика</a>
+                <div class="mt-auto d-flex flex-column align-items-center gap-2">
+                    <a href="{{ url_for('stats.survey_stats', survey_id=survey.id) }}" class="btn btn-outline-secondary btn-sm w-100">Статистика</a>
+
+                    {% if survey.start_date > current_time %}
+                        <a href="{{ url_for('survey.edit_survey', survey_id=survey.id) }}" class="btn btn-outline-primary btn-sm w-100">Редактировать</a>
+                    {% endif %}
+
                 </div>
+
             </div>
         </div>
     </div>
