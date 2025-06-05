@@ -18,7 +18,10 @@
 
                     {% if question.image_path %}
                         <div class="mb-3">
-                            <img src="{{ url_for('static', filename=question.image_path) }}" 
+                            <!-- Debug info -->
+                            <!-- Image path from DB: {{ question.image_path }} -->
+                            {% set image_path = question.image_path[8:] if question.image_path.startswith('uploads/') else question.image_path %}
+                            <img src="{{ url_for('survey.uploads', filename=image_path) }}"
                                  alt="Question image" 
                                  class="img-fluid rounded" 
                                  style="max-height: 300px;">

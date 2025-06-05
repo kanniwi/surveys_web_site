@@ -44,6 +44,8 @@ class QuestionRepository:
             )
             db.session.add(new_option)
             db.session.commit()
+            return new_option
+        return None
             
     def update_option(self, option_id, **kwargs):
         option = db.session.query(Option).filter_by(id=option_id).first()

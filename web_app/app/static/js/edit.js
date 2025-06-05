@@ -9,17 +9,49 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
     
-    questionIndex = parseInt(container.dataset.questionCount || "0");
+    // Получаем количество существующих вопросов
+    const existingQuestions = container.querySelectorAll('.question-block');
+    questionIndex = existingQuestions.length;
+    console.log("Number of existing questions:", questionIndex);
     console.log("Initial question index:", questionIndex);
 
     // Предотвращаем отправку формы при нажатии на кнопки
     const form = document.getElementById('edit-survey-form');
     if (form) {
         form.addEventListener('submit', function(e) {
-            // Проверяем, что форма отправляется только по кнопке отправки формы
-            if (!e.submitter || e.submitter.type !== 'submit') {
-                e.preventDefault();
+            e.preventDefault();
+            console.log("Form submission intercepted");
+            
+            // Проверяем, что есть хотя бы один вопрос
+            const questions = document.querySelectorAll('.question-block');
+            if (questions.length === 0) {
+                const alert = document.getElementById('form-alert');
+                alert.classList.remove('d-none');
+                return;
             }
+
+            // Обновляем индексы перед отправкой
+            updateExistingQuestionIndices();
+            
+            // Проверяем, что все вопросы имеют ответы (кроме текстовых)
+            let isValid = true;
+            questions.forEach((question, index) => {
+                const type = question.querySelector('select').value;
+                const answers = question.querySelectorAll('.answer-row');
+                if (type !== 'text' && answers.length === 0) {
+                    isValid = false;
+                    console.error(`Question ${index} has no answers`);
+                }
+            });
+
+            if (!isValid) {
+                alert('Пожалуйста, добавьте хотя бы один ответ для каждого вопроса');
+                return;
+            }
+
+            // Отправляем форму
+            console.log("Submitting form...");
+            form.submit();
         });
     }
 
@@ -80,7 +112,34 @@ document.addEventListener("DOMContentLoaded", function () {
             previewImage(e.target);
         }
     });
+
+    // Проверяем и обновляем индексы существующих вопросов
+    updateExistingQuestionIndices();
 });
+
+function updateExistingQuestionIndices() {
+    console.log("Updating question indices");
+    const questions = document.querySelectorAll('.question-block');
+    questions.forEach((question, index) => {
+        console.log(`Updating question ${index}`);
+        // Обновляем все поля вопроса
+        question.querySelectorAll('[name]').forEach(input => {
+            const name = input.name;
+            if (name.includes('questions[')) {
+                const newName = name.replace(/questions\[\d+\]/, `questions[${index}]`);
+                input.name = newName;
+                console.log(`Updated name: ${name} -> ${newName}`);
+            }
+        });
+
+        // Обновляем data-question-index для select
+        const select = question.querySelector('select');
+        if (select) {
+            select.setAttribute('data-question-index', index);
+            console.log(`Updated select data-question-index to ${index}`);
+        }
+    });
+}
 
 function addQuestion() {
     console.log("Adding new question");
@@ -101,12 +160,17 @@ function addQuestion() {
 
     // Обновляем индексы в name атрибутах
     questionNode.querySelectorAll('[name]').forEach(input => {
-        input.name = input.name.replace('questions[][', `questions[${questionIndex}][`);
+        const name = input.name;
+        if (name.includes('questions[]')) {
+            input.name = name.replace('questions[]', `questions[${questionIndex}]`);
+            console.log(`Updated name: ${name} -> ${input.name}`);
+        }
     });
 
     // Обновляем data-question-index для select
     const select = questionNode.querySelector('select');
     select.setAttribute('data-question-index', questionIndex);
+    console.log(`Set select data-question-index to ${questionIndex}`);
 
     container.appendChild(questionNode);
     console.log("New question added, index:", questionIndex);
@@ -132,7 +196,11 @@ function addAnswer(button, questionIndex) {
 
     // Обновляем индекс в name атрибуте
     answerNode.querySelectorAll('input[name]').forEach(input => {
-        input.name = input.name.replace('questions[][', `questions[${questionIndex}][`);
+        const name = input.name;
+        if (name.includes('questions[]')) {
+            input.name = name.replace('questions[]', `questions[${questionIndex}]`);
+            console.log(`Updated answer name: ${name} -> ${input.name}`);
+        }
     });
 
     answersContainer.appendChild(answerNode);
@@ -141,6 +209,8 @@ function addAnswer(button, questionIndex) {
 
 function removeQuestion(button) {
     button.closest('.question-block').remove();
+    // После удаления вопроса обновляем индексы
+    updateExistingQuestionIndices();
 }
 
 function onQuestionTypeChange(select) {
