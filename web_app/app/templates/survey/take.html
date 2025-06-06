@@ -18,8 +18,6 @@
 
                     {% if question.image_path %}
                         <div class="mb-3">
-                            <!-- Debug info -->
-                            <!-- Image path from DB: {{ question.image_path }} -->
                             {% set image_path = question.image_path[8:] if question.image_path.startswith('uploads/') else question.image_path %}
                             <img src="{{ url_for('survey.uploads', filename=image_path) }}"
                                  alt="Question image" 

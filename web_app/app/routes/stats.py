@@ -20,7 +20,6 @@ def survey_stats(survey_id):
         flash("Опрос не найден", "danger")
         return redirect(url_for('main.index'))
 
-    # Create a dictionary with the survey data for JSON serialization
     survey_data = {
         'id': survey.id,
         'title': survey.title,
@@ -36,10 +35,8 @@ def survey_stats(survey_id):
         }
 
         if question.question_type.value == 'text':
-            # For text questions, include text responses
             question_data['text_responses'] = question.text_stats
         else:
-            # For single/multiple choice questions, include options with vote counts
             for option in question.options:
                 option_data = {
                     'id': option.id,
